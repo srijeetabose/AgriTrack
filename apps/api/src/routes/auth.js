@@ -260,53 +260,72 @@ router.post('/farmer/register', async (req, res) => {
     }
 
     // Check database if configured
+    let useInMemory = !db.isConfigured();
+    
     if (db.isConfigured()) {
-      const { data: existingFarmer } = await db.getFarmerByPhone(cleanPhone);
-      if (existingFarmer) {
+      const { data: existingFarmer, error: lookupError } = await db.getFarmerByPhone(cleanPhone);
+      
+      // If farmers table doesn't exist, fall back to in-memory
+      if (lookupError && lookupError.message === 'FARMERS_TABLE_NOT_EXISTS') {
+        console.log('Farmers table not found in database, using in-memory mode');
+        useInMemory = true;
+      } else if (existingFarmer) {
         return res.status(409).json({ error: 'Phone number already registered' });
       }
 
-      // Create farmer in database
-      const { data: newFarmer, error } = await db.createFarmer({
-        phone: cleanPhone,
-        pin_hash: pin, // In production, hash this!
-        name,
-        district: district || '',
-        state: state || '',
-        village: village || '',
-        total_land_area: farm_size || 0,
-        aadhaar_last4: aadhaar_last4 || '',
-        green_certified: false,
-        green_credits: 0,
-        crops: []
-      });
-
-      if (error) {
-        console.error('Database error:', error);
-        return res.status(500).json({ error: 'Failed to register farmer' });
-      }
-
-      const token = generateToken(newFarmer, 'farmer');
-
-      return res.status(201).json({
-        success: true,
-        message: 'Registration successful!',
-        token,
-        user: {
-          id: newFarmer.id,
-          phone: newFarmer.phone,
-          name: newFarmer.name,
-          district: newFarmer.district,
-          state: newFarmer.state,
-          village: newFarmer.village,
-          farm_size: newFarmer.total_land_area,
+      if (!useInMemory) {
+        // Create farmer in database
+        const { data: newFarmer, error } = await db.createFarmer({
+          phone: cleanPhone,
+          pin_hash: pin, // In production, hash this!
+          name,
+          district: district || '',
+          state: state || '',
+          village: village || '',
+          total_land_area: farm_size || 0,
+          aadhaar_last4: aadhaar_last4 || '',
           green_certified: false,
           green_credits: 0,
-          crops: [],
-          role: 'farmer'
+          crops: []
+        });
+
+        if (error) {
+          console.error('Database error:', error);
+          // If table doesn't exist, fall back to in-memory
+          if (error.message === 'FARMERS_TABLE_NOT_EXISTS') {
+            console.log('Farmers table not found, falling back to in-memory');
+            useInMemory = true;
+          } else {
+            return res.status(500).json({ error: 'Failed to register farmer' });
+          }
         }
-      });
+
+        if (!useInMemory && newFarmer) {
+          const token = generateToken(newFarmer, 'farmer');
+
+          return res.status(201).json({
+            success: true,
+            message: 'Registration successful!',
+            token,
+            user: {
+              id: newFarmer.id,
+              phone: newFarmer.phone,
+              name: newFarmer.name,
+              district: newFarmer.district,
+              state: newFarmer.state,
+              village: newFarmer.village,
+              farm_size: newFarmer.total_land_area,
+              green_certified: false,
+              green_credits: 0,
+              crops: [],
+              role: 'farmer'
+            }
+          });
+        }
+      }
     }
+    
+    // Fall through to in-memory registration if database not available
 
     // If database not configured, add to in-memory demo credentials
     const newFarmerId = `farmer_${Date.now()}`;

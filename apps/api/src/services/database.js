@@ -554,11 +554,23 @@ class DatabaseService {
     // Clean phone number
     const cleanPhone = phone.replace(/[\s\-+]/g, '').replace(/^91/, '');
 
-    return await this.supabase
-      .from('farmers')
-      .select('*')
-      .or(`phone.eq.${cleanPhone},phone.eq.+91${cleanPhone}`)
-      .single();
+    try {
+      const result = await this.supabase
+        .from('farmers')
+        .select('*')
+        .or(`phone.eq.${cleanPhone},phone.eq.+91${cleanPhone}`)
+        .single();
+      
+      // Check if table doesn't exist
+      if (result.error && (result.error.code === '42P01' || result.error.message?.includes('does not exist'))) {
+        return { data: null, error: { message: 'FARMERS_TABLE_NOT_EXISTS' } };
+      }
+      
+      return result;
+    } catch (err) {
+      console.error('getFarmerByPhone exception:', err);
+      return { data: null, error: { message: err.message } };
+    }
   }
 
   /**
@@ -580,26 +592,39 @@ class DatabaseService {
   async createFarmer(farmerData) {
     if (!this.isConnected) return { data: null, error: { message: 'Database not connected' } };
 
-    const { data, error } = await this.supabase
-      .from('farmers')
-      .insert({
-        phone: farmerData.phone,
-        pin_hash: farmerData.pin_hash,
-        name: farmerData.name,
-        district: farmerData.district || '',
-        state: farmerData.state || '',
-        village: farmerData.village || '',
-        total_land_area: farmerData.total_land_area || 0,
-        aadhaar_last4: farmerData.aadhaar_last4 || '',
-        green_certified: false,
-        green_credits: 0,
-        crops: farmerData.crops || [],
-        language_preference: farmerData.language || 'hindi'
-      })
-      .select()
-      .single();
+    try {
+      const { data, error } = await this.supabase
+        .from('farmers')
+        .insert({
+          phone: farmerData.phone,
+          pin_hash: farmerData.pin_hash,
+          name: farmerData.name,
+          district: farmerData.district || '',
+          state: farmerData.state || '',
+          village: farmerData.village || '',
+          total_land_area: farmerData.total_land_area || 0,
+          aadhaar_last4: farmerData.aadhaar_last4 || '',
+          green_certified: false,
+          green_credits: 0,
+          crops: farmerData.crops || [],
+          language_preference: farmerData.language || 'hindi'
+        })
+        .select()
+        .single();
 
-    return { data, error };
+      if (error) {
+        console.error('Supabase createFarmer error:', error);
+        // If table doesn't exist, return specific error
+        if (error.code === '42P01' || error.message?.includes('does not exist')) {
+          return { data: null, error: { message: 'FARMERS_TABLE_NOT_EXISTS' } };
+        }
+      }
+
+      return { data, error };
+    } catch (err) {
+      console.error('createFarmer exception:', err);
+      return { data: null, error: { message: err.message } };
+    }
   }
 
   /**
