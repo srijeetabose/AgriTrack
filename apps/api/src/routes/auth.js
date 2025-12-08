@@ -171,12 +171,14 @@ router.post('/farmer/login', async (req, res) => {
       return res.status(400).json({ error: 'Phone and PIN required' });
     }
 
-    // Clean phone number
-    const cleanPhone = phone.replace(/\s+/g, '');
+    // Clean phone number - remove spaces, +, 91 prefix
+    const cleanPhone = phone.replace(/[\s\-+]/g, '').replace(/^91/, '');
     
-    const farmer = DEMO_CREDENTIALS.farmers.find(
-      f => f.phone === cleanPhone && f.pin === pin
-    );
+    const farmer = DEMO_CREDENTIALS.farmers.find(f => {
+      // Also clean the stored phone for comparison
+      const storedPhone = f.phone.replace(/[\s\-+]/g, '').replace(/^91/, '');
+      return storedPhone === cleanPhone && f.pin === pin;
+    });
 
     if (!farmer) {
       return res.status(401).json({ error: 'Invalid phone or PIN' });
