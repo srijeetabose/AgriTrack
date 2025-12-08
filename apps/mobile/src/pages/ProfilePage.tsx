@@ -12,12 +12,19 @@ import {
   ShoppingBag,
   Leaf,
   Star,
-  Shield
+  Shield,
+  X
 } from 'lucide-react'
 import './ProfilePage.css'
 
 export default function ProfilePage() {
   const [notifications, setNotifications] = useState(true)
+  const [showPhoneModal, setShowPhoneModal] = useState(false)
+  const [showPinModal, setShowPinModal] = useState(false)
+  const [newPhone, setNewPhone] = useState('')
+  const [currentPin, setCurrentPin] = useState('')
+  const [newPin, setNewPin] = useState('')
+  const [confirmPin, setConfirmPin] = useState('')
   const { user, logout } = useAuth()
   const navigate = useNavigate()
 
@@ -26,6 +33,45 @@ export default function ProfilePage() {
       logout()
       navigate('/login')
     }
+  }
+
+  const handleUpdatePhone = () => {
+    if (!newPhone || newPhone.length < 10) {
+      alert('Please enter a valid phone number')
+      return
+    }
+    alert('Phone number update request sent! You will receive an OTP for verification.')
+    setShowPhoneModal(false)
+    setNewPhone('')
+  }
+
+  const handleChangePin = () => {
+    if (currentPin.length !== 4) {
+      alert('Please enter your current 4-digit PIN')
+      return
+    }
+    if (newPin.length !== 4) {
+      alert('New PIN must be 4 digits')
+      return
+    }
+    if (newPin !== confirmPin) {
+      alert('New PIN and confirmation do not match')
+      return
+    }
+    alert('PIN changed successfully!')
+    setShowPinModal(false)
+    setCurrentPin('')
+    setNewPin('')
+    setConfirmPin('')
+  }
+
+  const handleContactHelpline = () => {
+    const helplineNumber = 'tel:1800-180-1551'
+    window.location.href = helplineNumber
+  }
+
+  const handleFAQs = () => {
+    alert('FAQs:\n\n1. How to book a machine?\n   Go to Home > Book Machine\n\n2. How to get Green Certified?\n   Complete 3+ harvests without burning\n\n3. What are Green Credits?\n   Rewards for eco-friendly farming\n\n4. Contact support?\n   Call 1800-180-1551 (Toll Free)')
   }
 
   return (
@@ -151,7 +197,7 @@ export default function ProfilePage() {
             </label>
           </div>
           
-          <div className="settings-row clickable">
+          <div className="settings-row clickable" onClick={() => setShowPhoneModal(true)}>
             <div className="settings-left">
               <Phone size={20} />
               <span>Update Phone Number</span>
@@ -159,7 +205,7 @@ export default function ProfilePage() {
             <ChevronRight size={20} className="chevron" />
           </div>
 
-          <div className="settings-row clickable">
+          <div className="settings-row clickable" onClick={() => setShowPinModal(true)}>
             <div className="settings-left">
               <Shield size={20} />
               <span>Change PIN</span>
@@ -173,14 +219,14 @@ export default function ProfilePage() {
       <div className="profile-section">
         <h3>Support</h3>
         <div className="settings-card">
-          <div className="settings-row clickable">
+          <div className="settings-row clickable" onClick={handleContactHelpline}>
             <div className="settings-left">
               <span>📞</span>
               <span>Contact Helpline</span>
             </div>
             <ChevronRight size={20} className="chevron" />
           </div>
-          <div className="settings-row clickable">
+          <div className="settings-row clickable" onClick={handleFAQs}>
             <div className="settings-left">
               <span>❓</span>
               <span>FAQs</span>
@@ -201,6 +247,87 @@ export default function ProfilePage() {
         <p>AgriTrack v1.0.0</p>
         <p>Smart India Hackathon 2025</p>
       </div>
+
+      {/* Phone Update Modal */}
+      {showPhoneModal && (
+        <div className="modal-overlay" onClick={() => setShowPhoneModal(false)}>
+          <div className="modal" onClick={e => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3>Update Phone Number</h3>
+              <button className="close-btn" onClick={() => setShowPhoneModal(false)}>
+                <X size={20} />
+              </button>
+            </div>
+            <div className="modal-body">
+              <p className="current-phone">Current: {user?.phone}</p>
+              <div className="form-group">
+                <label>New Phone Number</label>
+                <input
+                  type="tel"
+                  value={newPhone}
+                  onChange={(e) => setNewPhone(e.target.value)}
+                  placeholder="Enter new phone number"
+                  maxLength={10}
+                />
+              </div>
+            </div>
+            <div className="modal-actions">
+              <button className="btn-secondary" onClick={() => setShowPhoneModal(false)}>Cancel</button>
+              <button className="btn-primary" onClick={handleUpdatePhone}>Send OTP</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* PIN Change Modal */}
+      {showPinModal && (
+        <div className="modal-overlay" onClick={() => setShowPinModal(false)}>
+          <div className="modal" onClick={e => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3>Change PIN</h3>
+              <button className="close-btn" onClick={() => setShowPinModal(false)}>
+                <X size={20} />
+              </button>
+            </div>
+            <div className="modal-body">
+              <div className="form-group">
+                <label>Current PIN</label>
+                <input
+                  type="password"
+                  value={currentPin}
+                  onChange={(e) => setCurrentPin(e.target.value.replace(/\D/g, '').slice(0, 4))}
+                  placeholder="••••"
+                  maxLength={4}
+                />
+              </div>
+              <div className="form-group">
+                <label>New PIN</label>
+                <input
+                  type="password"
+                  value={newPin}
+                  onChange={(e) => setNewPin(e.target.value.replace(/\D/g, '').slice(0, 4))}
+                  placeholder="••••"
+                  maxLength={4}
+                />
+              </div>
+              <div className="form-group">
+                <label>Confirm New PIN</label>
+                <input
+                  type="password"
+                  value={confirmPin}
+                  onChange={(e) => setConfirmPin(e.target.value.replace(/\D/g, '').slice(0, 4))}
+                  placeholder="••••"
+                  maxLength={4}
+                />
+              </div>
+            </div>
+            <div className="modal-actions">
+              <button className="btn-secondary" onClick={() => setShowPinModal(false)}>Cancel</button>
+              <button className="btn-primary" onClick={handleChangePin}>Change PIN</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

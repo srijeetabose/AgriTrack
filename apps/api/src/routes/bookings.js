@@ -125,8 +125,15 @@ router.post('/', async (req, res) => {
     const io = req.app.get('io');
     io.emit('booking_update', data);
 
-    // TODO: Send SMS notification
-    console.log(`📱 SMS: Booking created for farmer ${farmer_id}`);
+    // Send SMS notification for booking confirmation
+    const notificationService = require('../services/notifications');
+    if (farmer_phone) {
+      notificationService.sendBookingConfirmationSMS(
+        { phone: farmer_phone, name: farmer_name || 'Farmer', language: 'hindi' },
+        { machine_name: machine_id, scheduled_date, time_slot: '' }
+      ).catch(err => console.error('SMS notification error:', err.message));
+    }
+    console.log(`📱 Booking created for farmer ${farmer_id}`);
 
     res.status(201).json(data);
   } catch (err) {

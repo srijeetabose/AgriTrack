@@ -6,9 +6,10 @@ import './LoginPage.css';
 
 // Demo credentials for easy testing
 const DEMO_CREDENTIALS = [
-  { phone: '+919876543210', pin: '1234', name: 'Gurpreet Singh (Green ✓)' },
-  { phone: '+919123456789', pin: '5678', name: 'Rajender Kumar' },
-  { phone: '+918765432109', pin: '4321', name: 'Harjinder Kaur (Green ✓)' },
+  { phone: '7980638514', pin: '1234', name: 'Srijbasu (Your Account)' },
+  { phone: '9876543210', pin: '1234', name: 'Gurpreet Singh (Green ✓)' },
+  { phone: '9123456789', pin: '5678', name: 'Rajender Kumar' },
+  { phone: '8765432109', pin: '4321', name: 'Harjinder Kaur (Green ✓)' },
 ];
 
 export default function LoginPage() {

@@ -94,6 +94,57 @@ export default function GreenCertificatePage() {
     }
   };
 
+  const handleDownload = () => {
+    if (!certificate) return;
+    
+    // Create a simple text-based certificate for download
+    const certContent = `
+═══════════════════════════════════════════════════════
+                    GREEN CERTIFICATE
+                    हरित प्रमाण पत्र
+═══════════════════════════════════════════════════════
+
+This is to certify that
+
+    ${certificate.farmer_name}
+    ${certificate.village}, ${certificate.district}, ${certificate.state}
+
+has been awarded the GREEN FARMER CERTIFICATE for 
+practicing sustainable agriculture and avoiding 
+stubble burning.
+
+Certificate ID: ${certificate.certificate_id}
+Farm Size: ${certificate.farm_size} hectares
+Green Credits: ${certificate.green_credits}
+
+Issued On: ${new Date(certificate.certification_date).toLocaleDateString('en-IN')}
+Valid Until: ${new Date(certificate.valid_until).toLocaleDateString('en-IN')}
+
+ACHIEVEMENTS:
+${certificate.achievements.map(a => `  ✓ ${a.title}: ${a.description}`).join('\n')}
+
+BENEFITS:
+${certificate.benefits.map(b => `  • ${b}`).join('\n')}
+
+═══════════════════════════════════════════════════════
+              AgriTrack • Smart India Hackathon 2025
+═══════════════════════════════════════════════════════
+`;
+
+    // Create blob and download
+    const blob = new Blob([certContent], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `GreenCertificate_${certificate.certificate_id}.txt`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    
+    alert('Certificate downloaded! Check your downloads folder.');
+  };
+
   if (loading) {
     return (
       <div className="certificate-page">
@@ -231,7 +282,7 @@ export default function GreenCertificatePage() {
           <Share2 size={20} />
           Share
         </button>
-        <button className="action-btn download">
+        <button className="action-btn download" onClick={handleDownload}>
           <Download size={20} />
           Download PDF
         </button>
