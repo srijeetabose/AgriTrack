@@ -353,3 +353,56 @@
   background: #d1d5db;
   border-radius: 4px;
 }
+
+
+/* GPS Location Section */
+.location-section {
+  margin-bottom: 16px;
+}
+
+.gps-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 14px 20px;
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.gps-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(59, 130, 246, 0.35);
+}
+
+.gps-btn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.gps-btn .spin {
+  animation: spin 1s linear infinite;
+}
+
+.location-error {
+  margin: 8px 0 0 0;
+  padding: 8px 12px;
+  background: #fef2f2;
+  border-radius: 8px;
+  color: #dc2626;
+  font-size: 13px;
+  text-align: center;
+}
+
+/* Location filled indicator */
+.input-group input.location-filled {
+  border-color: #16a34a;
+  background: #f0fdf4;
+}

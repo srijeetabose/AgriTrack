@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { Leaf, Phone, Lock, Eye, EyeOff, AlertCircle, Info, User, MapPin, ArrowLeft } from 'lucide-react';
+import { Leaf, Phone, Lock, Eye, EyeOff, AlertCircle, Info, User, MapPin, ArrowLeft, Navigation, Loader } from 'lucide-react';
 import './LoginPage.css';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
@@ -29,9 +29,92 @@ export default function LoginPage() {
   const [success, setSuccess] = useState('');
   const [loading, setLoading] = useState(false);
   const [showDemo, setShowDemo] = useState(false);
+  const [locationLoading, setLocationLoading] = useState(false);
+  const [locationError, setLocationError] = useState('');
   
   const { login } = useAuth();
   const navigate = useNavigate();
+
+  // Get GPS location and reverse geocode to get address
+  const getLocationAndFill = async () => {
+    setLocationLoading(true);
+    setLocationError('');
+
+    if (!navigator.geolocation) {
+      setLocationError('GPS not supported on this device');
+      setLocationLoading(false);
+      return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        const { latitude, longitude } = position.coords;
+        
+        try {
+          // Use OpenStreetMap Nominatim for reverse geocoding (free, no API key needed)
+          const response = await fetch(
+            `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&addressdetails=1`,
+            {
+              headers: {
+                'Accept-Language': 'en',
+                'User-Agent': 'AgriTrack-App'
+              }
+            }
+          );
+          
+          const data = await response.json();
+          
+          if (data && data.address) {
+            const addr = data.address;
+            
+            // Extract village/town/city
+            const villageValue = addr.village || addr.town || addr.city || addr.suburb || addr.hamlet || '';
+            if (villageValue) setVillage(villageValue);
+            
+            // Extract district
+            const districtValue = addr.county || addr.state_district || addr.district || '';
+            if (districtValue) setDistrict(districtValue);
+            
+            // Extract state
+            const stateValue = addr.state || '';
+            if (stateValue) setState(stateValue);
+            
+            setSuccess('📍 Location detected successfully!');
+            setTimeout(() => setSuccess(''), 3000);
+          } else {
+            setLocationError('Could not detect location details');
+          }
+        } catch (err) {
+          console.error('Geocoding error:', err);
+          setLocationError('Failed to get address from location');
+        }
+        
+        setLocationLoading(false);
+      },
+      (err) => {
+        console.error('GPS error:', err);
+        switch (err.code) {
+          case err.PERMISSION_DENIED:
+            setLocationError('Location permission denied. Please enable GPS.');
+            break;
+          case err.POSITION_UNAVAILABLE:
+            setLocationError('Location unavailable. Please try again.');
+            break;
+          case err.TIMEOUT:
+            setLocationError('Location request timed out. Please try again.');
+            break;
+          default:
+            setLocationError('Failed to get location');
+        }
+        setLocationLoading(false);
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 15000,
+        maximumAge: 0
+      }
+    );
+  };
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -224,6 +307,31 @@ export default function LoginPage() {
                 maxLength={4}
                 disabled={loading}
               />
+            </div>
+
+            {/* GPS Location Button */}
+            <div className="location-section">
+              <button 
+                type="button" 
+                className="gps-btn"
+                onClick={getLocationAndFill}
+                disabled={locationLoading || loading}
+              >
+                {locationLoading ? (
+                  <>
+                    <Loader size={18} className="spin" />
+                    Detecting location...
+                  </>
+                ) : (
+                  <>
+                    <Navigation size={18} />
+                    📍 Auto-fill from GPS Location
+                  </>
+                )}
+              </button>
+              {locationError && (
+                <p className="location-error">{locationError}</p>
+              )}
             </div>
 
             <div className="input-group">
