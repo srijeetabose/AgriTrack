@@ -43,21 +43,17 @@ export default function HomePage() {
 
   return (
     <div className="home-page">
-      {/* Header */}
-      <div className="home-header">
-        <div className="header-left">
-          <Tractor size={28} />
-          <div>
-            <h1>AgriTrack</h1>
-            <p>Farmer Portal</p>
-          </div>
-        </div>
-      </div>
-
-      {/* Welcome */}
+      {/* Welcome Card - No duplicate header */}
       <section className="welcome-card">
-        <h2>Welcome, {user?.name?.split(' ')[0] || 'Farmer'}! 👋</h2>
-        <p>Smart India Hackathon 2025</p>
+        <div className="welcome-greeting">
+          <h2>नमस्ते, {user?.name?.split(' ')[0] || 'Farmer'}! 👋</h2>
+          <p className="welcome-subtitle">What would you like to do today?</p>
+        </div>
+        {user?.green_certified && (
+          <div className="green-badge">
+            <span>🌿 Green Certified</span>
+          </div>
+        )}
       </section>
 
       {/* Quick Actions */}

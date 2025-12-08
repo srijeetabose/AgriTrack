@@ -214,34 +214,84 @@ export default function BookMachinePage() {
       return
     }
 
-    if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
-      const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition
-      recognitionRef.current = new SpeechRecognition()
-      recognitionRef.current.continuous = false
-      recognitionRef.current.interimResults = true
+    // Check for speech recognition support
+    const SpeechRecognitionAPI = (window as any).SpeechRecognition || 
+                                  (window as any).webkitSpeechRecognition ||
+                                  (window as any).mozSpeechRecognition ||
+                                  (window as any).msSpeechRecognition
+
+    if (!SpeechRecognitionAPI) {
+      alert('Voice input is not supported on this device. Please use a modern browser or Chrome.')
+      return
+    }
+
+    try {
+      recognitionRef.current = new SpeechRecognitionAPI()
+      recognitionRef.current.continuous = true // Keep listening
+      recognitionRef.current.interimResults = true // Show partial results
       recognitionRef.current.lang = voiceLanguage
+      recognitionRef.current.maxAlternatives = 3 // Get multiple alternatives
+
+      let fullTranscript = ''
+
+      recognitionRef.current.onstart = () => {
+        console.log('Voice recognition started')
+        setIsListening(true)
+        setTranscript('')
+        fullTranscript = ''
+      }
 
       recognitionRef.current.onresult = (event: any) => {
+        let interimTranscript = ''
         let finalTranscript = ''
-        for (let i = 0; i < event.results.length; i++) {
-          finalTranscript += event.results[i][0].transcript
+
+        for (let i = event.resultIndex; i < event.results.length; i++) {
+          const transcript = event.results[i][0].transcript
+          if (event.results[i].isFinal) {
+            finalTranscript += transcript + ' '
+          } else {
+            interimTranscript += transcript
+          }
         }
-        setTranscript(finalTranscript)
-        if (event.results[0].isFinal) {
-          handleVoiceCommand(finalTranscript)
+
+        // Update display
+        if (finalTranscript) {
+          fullTranscript += finalTranscript
+          setTranscript(fullTranscript.trim())
+          // Process the final transcript
+          handleVoiceCommand(fullTranscript.trim())
+        } else if (interimTranscript) {
+          setTranscript(fullTranscript + interimTranscript)
         }
       }
 
-      recognitionRef.current.onerror = () => setIsListening(false)
-      recognitionRef.current.onend = () => setIsListening(false)
+      recognitionRef.current.onerror = (event: any) => {
+        console.error('Speech recognition error:', event.error)
+        setIsListening(false)
+        if (event.error === 'no-speech') {
+          speak(voiceLanguage === 'hi-IN' ? 'कुछ सुनाई नहीं दिया, फिर से बोलें' : 'No speech detected, try again', voiceLanguage)
+        } else if (event.error === 'not-allowed') {
+          alert('Microphone permission denied. Please allow microphone access.')
+        }
+      }
+
+      recognitionRef.current.onend = () => {
+        console.log('Voice recognition ended')
+        setIsListening(false)
+      }
 
       recognitionRef.current.start()
-      setIsListening(true)
+      
+      // Give audio feedback
       speak(voiceLanguage === 'hi-IN' 
-        ? 'बोलिए - फसल, एकड़, और गांव का नाम' 
-        : 'Speak - crop name, acres, and village', voiceLanguage)
-    } else {
-      alert('Voice input not supported on this device')
+        ? 'बोलिए - फसल का नाम, कितने एकड़, और गांव का नाम' 
+        : voiceLanguage === 'bn-IN'
+        ? 'বলুন - ফসলের নাম, কত বিঘা, এবং গ্রামের নাম'
+        : 'Speak - crop name, how many acres, and village name', voiceLanguage)
+        
+    } catch (error) {
+      console.error('Failed to start voice recognition:', error)
+      alert('Failed to start voice input. Please try again.')
     }
   }
 
@@ -293,19 +343,41 @@ export default function BookMachinePage() {
 
       {/* Voice Input Section */}
       <div className="voice-section">
+        <div className="voice-instructions">
+          <p>🎤 {voiceLanguage === 'hi-IN' ? 'बोलें:' : voiceLanguage === 'bn-IN' ? 'বলুন:' : 'Say:'}</p>
+          <p className="example-text">
+            {voiceLanguage === 'hi-IN' 
+              ? '"मुझे गेहूं के लिए 5 एकड़ जमीन जोतनी है, गांव रामपुर"'
+              : voiceLanguage === 'bn-IN'
+              ? '"আমার ধানের জন্য ৫ বিঘা জমি চাষ করতে হবে, গ্রাম রামপুর"'
+              : '"I need to harvest wheat on 5 acres in village Rampur"'}
+          </p>
+        </div>
+        
         <button 
           className={`voice-btn ${isListening ? 'listening' : ''} ${isSpeaking ? 'speaking' : ''}`}
           onClick={toggleListening}
         >
-          {isListening ? <MicOff size={32} /> : <Mic size={32} />}
+          {isListening ? (
+            <>
+              <div className="pulse-ring"></div>
+              <MicOff size={36} />
+            </>
+          ) : (
+            <Mic size={36} />
+          )}
         </button>
-        <p className="voice-hint">
-          {isListening ? 'Listening...' : 'Tap to speak in Hindi/English/Bengali'}
+        
+        <p className="voice-status">
+          {isListening 
+            ? (voiceLanguage === 'hi-IN' ? '🔴 सुन रहा हूं...' : voiceLanguage === 'bn-IN' ? '🔴 শুনছি...' : '🔴 Listening...')
+            : (voiceLanguage === 'hi-IN' ? 'बोलने के लिए टैप करें' : voiceLanguage === 'bn-IN' ? 'কথা বলতে ট্যাপ করুন' : 'Tap to speak')}
         </p>
+        
         {transcript && (
           <div className="transcript">
             <Volume2 size={16} />
-            <span>{transcript}</span>
+            <span>"{transcript}"</span>
           </div>
         )}
       </div>

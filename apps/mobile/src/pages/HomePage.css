@@ -1,59 +1,45 @@
 .home-page {
   min-height: 100vh;
-  background: #f9fafb;
+  background: linear-gradient(180deg, #f0fdf4 0%, #f9fafb 100%);
   padding-bottom: 80px;
 }
 
-/* Header */
-.home-header {
-  background: linear-gradient(135deg, #16a34a 0%, #15803d 100%);
-  color: white;
-  padding: 20px 16px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.header-left {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.header-left h1 {
-  font-size: 20px;
-  font-weight: 700;
-  margin: 0;
-  color: white;
-}
-
-.header-left p {
-  font-size: 12px;
-  margin: 0;
-  opacity: 0.9;
-  color: #dcfce7;
-}
-
-/* Welcome Card */
+/* Welcome Card - Improved */
 .welcome-card {
-  background: linear-gradient(135deg, rgba(22, 163, 74, 0.1) 0%, rgba(20, 184, 166, 0.1) 100%);
+  background: linear-gradient(135deg, #059669 0%, #0d9488 100%);
   margin: 16px;
-  padding: 20px;
-  border-radius: 16px;
-  border: 1px solid rgba(22, 163, 74, 0.2);
+  padding: 24px 20px;
+  border-radius: 20px;
+  box-shadow: 0 8px 25px rgba(5, 150, 105, 0.25);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 
-.welcome-card h2 {
-  font-size: 20px;
-  font-weight: 600;
-  margin: 0 0 4px 0;
-  color: #1f2937;
+.welcome-greeting h2 {
+  font-size: 22px;
+  font-weight: 700;
+  margin: 0 0 6px 0;
+  color: white;
 }
 
-.welcome-card p {
+.welcome-subtitle {
   font-size: 14px;
   margin: 0;
-  color: #6b7280;
+  color: rgba(255,255,255,0.85);
+}
+
+.green-badge {
+  background: rgba(255,255,255,0.2);
+  padding: 8px 14px;
+  border-radius: 20px;
+  backdrop-filter: blur(10px);
+}
+
+.green-badge span {
+  color: white;
+  font-size: 13px;
+  font-weight: 600;
 }
 
 /* Quick Actions */
