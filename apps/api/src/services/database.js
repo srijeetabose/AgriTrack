@@ -561,15 +561,31 @@ class DatabaseService {
         .or(`phone.eq.${cleanPhone},phone.eq.+91${cleanPhone}`)
         .single();
       
-      // Check if table doesn't exist
-      if (result.error && (result.error.code === '42P01' || result.error.message?.includes('does not exist'))) {
-        return { data: null, error: { message: 'FARMERS_TABLE_NOT_EXISTS' } };
+      // Check if table doesn't exist (various error codes/messages)
+      if (result.error) {
+        const errCode = result.error.code;
+        const errMsg = result.error.message?.toLowerCase() || '';
+        const errDetails = result.error.details?.toLowerCase() || '';
+        
+        if (errCode === '42P01' || 
+            errCode === 'PGRST204' ||
+            errMsg.includes('does not exist') || 
+            errMsg.includes('relation') ||
+            errDetails.includes('does not exist')) {
+          console.log('Farmers table not found in Supabase');
+          return { data: null, error: { message: 'FARMERS_TABLE_NOT_EXISTS' } };
+        }
+        
+        // PGRST116 = no rows found - this is OK, not an error
+        if (errCode === 'PGRST116') {
+          return { data: null, error: null };
+        }
       }
       
       return result;
     } catch (err) {
       console.error('getFarmerByPhone exception:', err);
-      return { data: null, error: { message: err.message } };
+      return { data: null, error: { message: 'FARMERS_TABLE_NOT_EXISTS' } };
     }
   }
 
@@ -614,8 +630,16 @@ class DatabaseService {
 
       if (error) {
         console.error('Supabase createFarmer error:', error);
+        const errCode = error.code;
+        const errMsg = error.message?.toLowerCase() || '';
+        const errDetails = error.details?.toLowerCase() || '';
+        
         // If table doesn't exist, return specific error
-        if (error.code === '42P01' || error.message?.includes('does not exist')) {
+        if (errCode === '42P01' || 
+            errCode === 'PGRST204' ||
+            errMsg.includes('does not exist') || 
+            errMsg.includes('relation') ||
+            errDetails.includes('does not exist')) {
           return { data: null, error: { message: 'FARMERS_TABLE_NOT_EXISTS' } };
         }
       }
