@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api/v1';
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 
 export interface User {
   id: string;
@@ -47,7 +47,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const login = async (phone: string, pin: string): Promise<{ success: boolean; error?: string }> => {
     try {
-      const response = await fetch(`${API_URL}/auth/farmer/login`, {
+      const response = await fetch(`${API_URL}/api/v1/auth/farmer/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

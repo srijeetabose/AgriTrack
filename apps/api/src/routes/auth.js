@@ -83,6 +83,20 @@ const DEMO_CREDENTIALS = {
       green_credits: 50,
       crops: ['Rice'],
       aadhaar_last4: '8901'
+    },
+    { 
+      id: 'farmer_006', 
+      phone: '+917980638514', 
+      pin: '1234', 
+      name: 'Srijbasu',
+      district: 'Kolkata',
+      state: 'West Bengal',
+      village: 'Demo Village',
+      farm_size: 10,
+      green_certified: true,
+      green_credits: 100,
+      crops: ['Rice', 'Wheat'],
+      aadhaar_last4: '0000'
     }
   ]
 };
