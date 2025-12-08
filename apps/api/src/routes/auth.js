@@ -234,6 +234,7 @@ router.post('/farmer/register', async (req, res) => {
   try {
     const { phone, pin, name, district, state, village, farm_size, aadhaar_last4 } = req.body;
 
+    // Validate required fields
     if (!phone || !pin || !name) {
       return res.status(400).json({ error: 'Phone, PIN, and name are required' });
     }
@@ -242,7 +243,7 @@ router.post('/farmer/register', async (req, res) => {
       return res.status(400).json({ error: 'PIN must be exactly 4 digits' });
     }
 
-    // Clean phone number
+    // Clean phone number - remove spaces, dashes, plus, and 91 prefix
     const cleanPhone = phone.replace(/[\s\-+]/g, '').replace(/^91/, '');
 
     if (cleanPhone.length !== 10 || !/^\d{10}$/.test(cleanPhone)) {
@@ -259,76 +260,8 @@ router.post('/farmer/register', async (req, res) => {
       return res.status(409).json({ error: 'Phone number already registered' });
     }
 
-    // Check database if configured - but always fall back to in-memory if any error
-    let useInMemory = !db.isConfigured();
-    
-    if (db.isConfigured()) {
-      try {
-        const { data: existingFarmer, error: lookupError } = await db.getFarmerByPhone(cleanPhone);
-        
-        // If any error (including table doesn't exist), fall back to in-memory
-        if (lookupError) {
-          console.log('Database lookup error, using in-memory mode:', lookupError.message);
-          useInMemory = true;
-        } else if (existingFarmer) {
-          return res.status(409).json({ error: 'Phone number already registered' });
-        }
-
-        if (!useInMemory) {
-          // Create farmer in database
-          const { data: newFarmer, error } = await db.createFarmer({
-            phone: cleanPhone,
-            pin_hash: pin, // In production, hash this!
-            name,
-            district: district || '',
-            state: state || '',
-            village: village || '',
-            total_land_area: farm_size || 0,
-            aadhaar_last4: aadhaar_last4 || '',
-            green_certified: false,
-            green_credits: 0,
-            crops: []
-          });
-
-          if (error) {
-            console.error('Database create error:', error);
-            // Any database error - fall back to in-memory
-            console.log('Falling back to in-memory registration');
-            useInMemory = true;
-          }
-
-          if (!useInMemory && newFarmer) {
-            const token = generateToken(newFarmer, 'farmer');
-
-            return res.status(201).json({
-              success: true,
-              message: 'Registration successful!',
-              token,
-              user: {
-                id: newFarmer.id,
-                phone: newFarmer.phone,
-                name: newFarmer.name,
-                district: newFarmer.district,
-                state: newFarmer.state,
-                village: newFarmer.village,
-                farm_size: newFarmer.total_land_area,
-                green_certified: false,
-                green_credits: 0,
-                crops: [],
-                role: 'farmer'
-              }
-            });
-          }
-        }
-      } catch (dbError) {
-        console.error('Database exception:', dbError);
-        useInMemory = true;
-      }
-    }
-    
-    // Fall through to in-memory registration if database not available or errored
-
-    // If database not configured, add to in-memory demo credentials
+    // For now, use in-memory registration (database farmers table not yet created)
+    // TODO: Enable database registration once farmers table is created in Supabase
     const newFarmerId = `farmer_${Date.now()}`;
     const newFarmer = {
       id: newFarmerId,
@@ -345,10 +278,14 @@ router.post('/farmer/register', async (req, res) => {
       aadhaar_last4: aadhaar_last4 || ''
     };
 
+    // Add to in-memory credentials array
     DEMO_CREDENTIALS.farmers.push(newFarmer);
+    console.log(`✅ New farmer registered: ${name} (${cleanPhone})`);
 
+    // Generate JWT token
     const token = generateToken(newFarmer, 'farmer');
 
+    // Return success response
     res.status(201).json({
       success: true,
       message: 'Registration successful!',
@@ -369,7 +306,7 @@ router.post('/farmer/register', async (req, res) => {
     });
   } catch (error) {
     console.error('Registration error:', error);
-    res.status(500).json({ error: 'Registration failed' });
+    res.status(500).json({ error: 'Registration failed: ' + error.message });
   }
 });
 
