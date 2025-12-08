@@ -12,7 +12,6 @@ const cors = require('cors');
 const mqtt = require('mqtt');
 const swaggerUi = require('swagger-ui-express');
 const YAML = require('yamljs');
-const path = require('path');
 const db = require('./services/database');
 const notificationService = require('./services/notifications');
 const alertManager = require('./services/alertManager');

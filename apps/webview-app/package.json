@@ -1,0 +1,18 @@
+{
+  "name": "agritrack-webview",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "build": "echo 'No build needed'",
+    "cap:add": "npx cap add android",
+    "cap:sync": "npx cap sync",
+    "cap:open": "npx cap open android"
+  },
+  "dependencies": {
+    "@capacitor/android": "^7.4.4",
+    "@capacitor/core": "^7.4.4"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "^7.4.4"
+  }
+}
