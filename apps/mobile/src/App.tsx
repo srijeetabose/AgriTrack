@@ -4,6 +4,7 @@ import Layout from './components/Layout'
 import HomePage from './pages/HomePage'
 import MachinesPage from './pages/MachinesPage'
 import MachineDetailPage from './pages/MachineDetailPage'
+import BookMachinePage from './pages/BookMachinePage'
 import BookingsPage from './pages/BookingsPage'
 import ProfilePage from './pages/ProfilePage'
 import LoginPage from './pages/LoginPage'
@@ -72,6 +73,7 @@ function AppRoutes() {
           <Route index element={<HomePage />} />
           <Route path="machines" element={<MachinesPage />} />
           <Route path="machines/:id" element={<MachineDetailPage />} />
+          <Route path="book" element={<BookMachinePage />} />
           <Route path="bookings" element={<BookingsPage />} />
           <Route path="marketplace" element={<MarketplacePage />} />
           <Route path="green-certificate" element={<GreenCertificatePage />} />

@@ -1,0 +1,254 @@
+.book-page {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #f0fdf4 0%, #ffffff 50%, #f0fdfa 100%);
+  padding-bottom: 100px;
+}
+
+.book-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+  background: linear-gradient(135deg, #059669 0%, #0d9488 100%);
+  color: white;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.book-header .back-btn {
+  background: rgba(255,255,255,0.2);
+  border: none;
+  padding: 8px;
+  border-radius: 10px;
+  color: white;
+  cursor: pointer;
+}
+
+.book-header h2 {
+  flex: 1;
+  margin: 0;
+  font-size: 18px;
+}
+
+.lang-selector select {
+  background: rgba(255,255,255,0.2);
+  border: none;
+  color: white;
+  padding: 6px 10px;
+  border-radius: 8px;
+  font-size: 14px;
+}
+
+/* Voice Section */
+.voice-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 24px 16px;
+  background: white;
+  margin: 16px;
+  border-radius: 16px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
+.voice-btn {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  border: none;
+  background: linear-gradient(135deg, #059669 0%, #0d9488 100%);
+  color: white;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(5, 150, 105, 0.3);
+}
+
+.voice-btn.listening {
+  background: linear-gradient(135deg, #dc2626 0%, #ef4444 100%);
+  animation: pulse 1.5s infinite;
+  box-shadow: 0 4px 15px rgba(220, 38, 38, 0.4);
+}
+
+.voice-btn.speaking {
+  background: linear-gradient(135deg, #2563eb 0%, #3b82f6 100%);
+}
+
+@keyframes pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+}
+
+.voice-hint {
+  margin-top: 12px;
+  color: #6b7280;
+  font-size: 14px;
+  text-align: center;
+}
+
+.transcript {
+  margin-top: 12px;
+  padding: 10px 16px;
+  background: #f3f4f6;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #374151;
+  font-size: 14px;
+  max-width: 100%;
+  word-break: break-word;
+}
+
+/* Crop Section */
+.crop-section {
+  margin: 0 16px 16px;
+}
+
+.crop-toggle {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  background: white;
+  border: 2px solid #e5e7eb;
+  border-radius: 12px;
+  font-size: 16px;
+  color: #374151;
+  cursor: pointer;
+}
+
+.crop-toggle span {
+  flex: 1;
+  text-align: left;
+}
+
+.crop-guide {
+  margin-top: 8px;
+  background: white;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.crop-search {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.crop-search input {
+  flex: 1;
+  border: none;
+  outline: none;
+  font-size: 14px;
+}
+
+.crop-list {
+  max-height: 250px;
+  overflow-y: auto;
+}
+
+.crop-item {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  text-align: left;
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.crop-item:hover, .crop-item.selected {
+  background: #f0fdf4;
+}
+
+.crop-item.selected {
+  border-left: 3px solid #059669;
+}
+
+.crop-icon {
+  font-size: 24px;
+}
+
+.crop-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.crop-name {
+  font-weight: 500;
+  color: #1f2937;
+}
+
+.crop-hindi {
+  font-size: 12px;
+  color: #6b7280;
+}
+
+/* Form */
+.book-form {
+  padding: 0 16px;
+}
+
+.form-group {
+  margin-bottom: 16px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #374151;
+}
+
+.form-group input,
+.form-group select {
+  width: 100%;
+  padding: 12px 14px;
+  border: 2px solid #e5e7eb;
+  border-radius: 10px;
+  font-size: 16px;
+  background: white;
+  color: #1f2937;
+  transition: border-color 0.2s;
+}
+
+.form-group input:focus,
+.form-group select:focus {
+  outline: none;
+  border-color: #059669;
+}
+
+.form-group input::placeholder {
+  color: #9ca3af;
+}
+
+.submit-btn {
+  width: 100%;
+  padding: 16px;
+  background: linear-gradient(135deg, #059669 0%, #0d9488 100%);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  margin-top: 8px;
+  box-shadow: 0 4px 12px rgba(5, 150, 105, 0.3);
+}
+
+.submit-btn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}

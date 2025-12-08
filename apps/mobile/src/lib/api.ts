@@ -56,7 +56,11 @@ export async function getBookings(farmerId: string): Promise<Booking[]> {
 export async function createBooking(data: {
   machine_id: string
   farmer_id: string
+  farmer_name?: string
+  farmer_phone?: string
   scheduled_date: string
+  acres?: number
+  location?: string
   notes?: string
 }): Promise<Booking> {
   const res = await fetch(`${API_URL}/api/v1/bookings`, {

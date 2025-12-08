@@ -62,7 +62,7 @@ export default function HomePage() {
 
       {/* Quick Actions */}
       <section className="quick-actions">
-        <div className="action-card" onClick={() => navigate('/machines')}>
+        <div className="action-card" onClick={() => navigate('/book')}>
           <div className="action-icon green">
             <BookOpen size={28} />
           </div>

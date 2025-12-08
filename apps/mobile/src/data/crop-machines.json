@@ -1,0 +1,381 @@
+{
+  "crops": [
+    {
+      "id": "rice",
+      "names": { "en": "Rice", "hi": "धान", "pa": "ਝੋਨਾ" },
+      "aliases": ["paddy", "chawal", "dhan", "ধান", "চাল"],
+      "season": "kharif",
+      "machines": ["Combine Harvester", "Happy Seeder", "Straw Baler", "Rotavator"],
+      "icon": "🌾",
+      "description": {
+        "en": "Rice is a staple crop. Use combine harvester for harvesting and happy seeder for next crop.",
+        "hi": "धान मुख्य फसल है। कटाई के लिए कम्बाइन और अगली फसल के लिए हैप्पी सीडर का उपयोग करें।"
+      }
+    },
+    {
+      "id": "wheat",
+      "names": { "en": "Wheat", "hi": "गेहूं", "pa": "ਕਣਕ" },
+      "aliases": ["gehun", "kanak", "গম"],
+      "season": "rabi",
+      "machines": ["Combine Harvester", "Seed Drill", "Rotavator", "Thresher"],
+      "icon": "🌾",
+      "description": {
+        "en": "Wheat is a major rabi crop. Use seed drill for sowing and combine for harvesting.",
+        "hi": "गेहूं रबी की प्रमुख फसल है। बुवाई के लिए सीड ड्रिल और कटाई के लिए कम्बाइन का उपयोग करें।"
+      }
+    },
+    {
+      "id": "maize",
+      "names": { "en": "Maize", "hi": "मक्का", "pa": "ਮੱਕੀ" },
+      "aliases": ["corn", "makka", "makki", "ভুট্টা"],
+      "season": "kharif",
+      "machines": ["Maize Harvester", "Seed Drill", "Shredder", "Rotavator"],
+      "icon": "🌽",
+      "description": {
+        "en": "Maize is used for food and fodder. Use maize harvester or shredder for residue.",
+        "hi": "मक्का भोजन और चारे के लिए उगाया जाता है। अवशेष के लिए श्रेडर का उपयोग करें।"
+      }
+    },
+    {
+      "id": "sugarcane",
+      "names": { "en": "Sugarcane", "hi": "गन्ना", "pa": "ਗੰਨਾ" },
+      "aliases": ["ganna", "ikhu", "আখ"],
+      "season": "annual",
+      "machines": ["Sugarcane Harvester", "Trench Digger", "Ratoon Manager"],
+      "icon": "🎋",
+      "description": {
+        "en": "Sugarcane is a major cash crop. Use sugarcane harvester for efficient cutting.",
+        "hi": "गन्ना एक प्रमुख नकदी फसल है। कुशल कटाई के लिए गन्ना हार्वेस्टर का उपयोग करें।"
+      }
+    },
+    {
+      "id": "cotton",
+      "names": { "en": "Cotton", "hi": "कपास", "pa": "ਨਰਮਾ" },
+      "aliases": ["kapas", "narma", "তুলা"],
+      "season": "kharif",
+      "machines": ["Cotton Picker", "Stalk Shredder", "Rotavator"],
+      "icon": "☁️",
+      "description": {
+        "en": "Cotton is a major fiber crop. Use cotton picker for harvesting.",
+        "hi": "कपास एक प्रमुख रेशा फसल है। कटाई के लिए कॉटन पिकर का उपयोग करें।"
+      }
+    },
+    {
+      "id": "soybean",
+      "names": { "en": "Soybean", "hi": "सोयाबीन", "pa": "ਸੋਇਆਬੀਨ" },
+      "aliases": ["soya", "সয়াবিন"],
+      "season": "kharif",
+      "machines": ["Combine Harvester", "Seed Drill", "Rotavator"],
+      "icon": "🫘",
+      "description": {
+        "en": "Soybean is an important oilseed crop. Use combine harvester for harvesting.",
+        "hi": "सोयाबीन एक महत्वपूर्ण तिलहन फसल है। कटाई के लिए कम्बाइन का उपयोग करें।"
+      }
+    },
+    {
+      "id": "mustard",
+      "names": { "en": "Mustard", "hi": "सरसों", "pa": "ਸਰ੍ਹੋਂ" },
+      "aliases": ["sarson", "rai", "সরিষা"],
+      "season": "rabi",
+      "machines": ["Combine Harvester", "Seed Drill", "Thresher"],
+      "icon": "🌻",
+      "description": {
+        "en": "Mustard is a major oilseed crop. Use seed drill for sowing.",
+        "hi": "सरसों एक प्रमुख तिलहन फसल है। बुवाई के लिए सीड ड्रिल का उपयोग करें।"
+      }
+    },
+    {
+      "id": "groundnut",
+      "names": { "en": "Groundnut", "hi": "मूंगफली", "pa": "ਮੂੰਗਫਲੀ" },
+      "aliases": ["peanut", "moongfali", "চিনাবাদাম"],
+      "season": "kharif",
+      "machines": ["Groundnut Digger", "Thresher", "Seed Drill"],
+      "icon": "🥜",
+      "description": {
+        "en": "Groundnut is grown for oil and food. Use groundnut digger for harvesting.",
+        "hi": "मूंगफली तेल और भोजन के लिए उगाई जाती है। कटाई के लिए डिगर का उपयोग करें।"
+      }
+    },
+    {
+      "id": "potato",
+      "names": { "en": "Potato", "hi": "आलू", "pa": "ਆਲੂ" },
+      "aliases": ["aloo", "আলু"],
+      "season": "rabi",
+      "machines": ["Potato Planter", "Potato Digger", "Rotavator"],
+      "icon": "🥔",
+      "description": {
+        "en": "Potato is a major vegetable crop. Use potato planter and digger.",
+        "hi": "आलू एक प्रमुख सब्जी फसल है। आलू प्लांटर और डिगर का उपयोग करें।"
+      }
+    },
+    {
+      "id": "onion",
+      "names": { "en": "Onion", "hi": "प्याज", "pa": "ਪਿਆਜ਼" },
+      "aliases": ["pyaj", "pyaaz", "পেঁয়াজ"],
+      "season": "rabi",
+      "machines": ["Onion Planter", "Onion Harvester", "Rotavator"],
+      "icon": "🧅",
+      "description": {
+        "en": "Onion is a major vegetable crop. Use onion harvester for efficient harvesting.",
+        "hi": "प्याज एक प्रमुख सब्जी फसल है। कुशल कटाई के लिए हार्वेस्टर का उपयोग करें।"
+      }
+    },
+    {
+      "id": "tomato",
+      "names": { "en": "Tomato", "hi": "टमाटर", "pa": "ਟਮਾਟਰ" },
+      "aliases": ["tamatar", "টমেটো"],
+      "season": "rabi",
+      "machines": ["Transplanter", "Sprayer", "Rotavator"],
+      "icon": "🍅",
+      "description": {
+        "en": "Tomato is grown for vegetables and processing. Use transplanter for planting.",
+        "hi": "टमाटर सब्जी और प्रसंस्करण के लिए उगाया जाता है। रोपाई के लिए ट्रांसप्लांटर का उपयोग करें।"
+      }
+    },
+    {
+      "id": "bajra",
+      "names": { "en": "Pearl Millet", "hi": "बाजरा", "pa": "ਬਾਜਰਾ" },
+      "aliases": ["millet", "bajra", "বাজরা"],
+      "season": "kharif",
+      "machines": ["Combine Harvester", "Seed Drill", "Thresher"],
+      "icon": "🌾",
+      "description": {
+        "en": "Pearl millet is a drought-resistant crop. Use combine for harvesting.",
+        "hi": "बाजरा सूखा प्रतिरोधी फसल है। कटाई के लिए कम्बाइन का उपयोग करें।"
+      }
+    },
+    {
+      "id": "jowar",
+      "names": { "en": "Sorghum", "hi": "ज्वार", "pa": "ਜਵਾਰ" },
+      "aliases": ["sorghum", "jowar", "জোয়ার"],
+      "season": "kharif",
+      "machines": ["Combine Harvester", "Seed Drill", "Fodder Harvester"],
+      "icon": "🌾",
+      "description": {
+        "en": "Sorghum is used for food and fodder. Use fodder harvester if grown for fodder.",
+        "hi": "ज्वार भोजन और चारे के लिए उपयोग होता है। चारे के लिए फॉडर हार्वेस्टर का उपयोग करें।"
+      }
+    },
+    {
+      "id": "pulses",
+      "names": { "en": "Pulses", "hi": "दाल", "pa": "ਦਾਲ" },
+      "aliases": ["dal", "lentils", "ডাল"],
+      "season": "rabi",
+      "machines": ["Combine Harvester", "Seed Drill", "Thresher"],
+      "icon": "🫘",
+      "description": {
+        "en": "Pulses are protein-rich crops. Use seed drill for sowing and combine for harvesting.",
+        "hi": "दालें प्रोटीन युक्त फसलें हैं। बुवाई के लिए सीड ड्रिल और कटाई के लिए कम्बाइन का उपयोग करें।"
+      }
+    },
+    {
+      "id": "chickpea",
+      "names": { "en": "Chickpea", "hi": "चना", "pa": "ਛੋਲੇ" },
+      "aliases": ["chana", "gram", "ছোলা"],
+      "season": "rabi",
+      "machines": ["Combine Harvester", "Seed Drill", "Thresher"],
+      "icon": "🫘",
+      "description": {
+        "en": "Chickpea is a major pulse crop. Use combine harvester for harvesting.",
+        "hi": "चना एक प्रमुख दलहन फसल है। कटाई के लिए कम्बाइन का उपयोग करें।"
+      }
+    },
+    {
+      "id": "jute",
+      "names": { "en": "Jute", "hi": "पटसन", "pa": "ਜੂਟ" },
+      "aliases": ["patsan", "পাট"],
+      "season": "kharif",
+      "machines": ["Jute Extractor", "Retting Machine"],
+      "icon": "🌿",
+      "description": {
+        "en": "Jute is a fiber crop grown in eastern India. Use jute extractor for processing.",
+        "hi": "पटसन पूर्वी भारत में उगाई जाने वाली रेशा फसल है।"
+      }
+    },
+    {
+      "id": "sunflower",
+      "names": { "en": "Sunflower", "hi": "सूरजमुखी", "pa": "ਸੂਰਜਮੁਖੀ" },
+      "aliases": ["surajmukhi"],
+      "season": "rabi",
+      "machines": ["Combine Harvester", "Seed Drill", "Rotavator"],
+      "icon": "🌻",
+      "description": {
+        "en": "Sunflower is grown for oil. Use combine harvester for harvesting.",
+        "hi": "सूरजमुखी तेल के लिए उगाया जाता है। कटाई के लिए कम्बाइन का उपयोग करें।"
+      }
+    },
+    {
+      "id": "barley",
+      "names": { "en": "Barley", "hi": "जौ", "pa": "ਜੌਂ" },
+      "aliases": ["jau", "jau"],
+      "season": "rabi",
+      "machines": ["Combine Harvester", "Seed Drill", "Thresher"],
+      "icon": "🌾",
+      "description": {
+        "en": "Barley is a cereal crop. Use combine harvester for harvesting.",
+        "hi": "जौ एक अनाज फसल है। कटाई के लिए कम्बाइन का उपयोग करें।"
+      }
+    },
+    {
+      "id": "sesame",
+      "names": { "en": "Sesame", "hi": "तिल", "pa": "ਤਿਲ" },
+      "aliases": ["til", "gingelly"],
+      "season": "kharif",
+      "machines": ["Combine Harvester", "Seed Drill", "Thresher"],
+      "icon": "🌱",
+      "description": {
+        "en": "Sesame is an oilseed crop. Use thresher for processing.",
+        "hi": "तिल एक तिलहन फसल है। प्रसंस्करण के लिए थ्रेशर का उपयोग करें।"
+      }
+    },
+    {
+      "id": "vegetables",
+      "names": { "en": "Vegetables", "hi": "सब्जी", "pa": "ਸਬਜ਼ੀ" },
+      "aliases": ["sabji", "sabzi", "শাকসবজি"],
+      "season": "all",
+      "machines": ["Transplanter", "Rotavator", "Sprayer", "Mulcher"],
+      "icon": "🥬",
+      "description": {
+        "en": "Various vegetables need different machines. Rotavator for land prep, sprayer for protection.",
+        "hi": "विभिन्न सब्जियों के लिए अलग मशीनें चाहिए। भूमि तैयारी के लिए रोटावेटर।"
+      }
+    }
+  ],
+  "machines": {
+    "Combine Harvester": {
+      "description": { "en": "Large machine for harvesting grain crops", "hi": "अनाज फसलों की कटाई के लिए बड़ी मशीन" },
+      "benefits": ["Fast harvesting", "Reduces labor", "Collects straw"],
+      "crops": ["rice", "wheat", "soybean", "mustard", "pulses"]
+    },
+    "Happy Seeder": {
+      "description": { "en": "Sows wheat directly into rice stubble without burning", "hi": "धान के ठूंठ में सीधे गेहूं बोने की मशीन - जलाने की जरूरत नहीं" },
+      "benefits": ["No stubble burning", "Saves water", "Improves soil health"],
+      "crops": ["wheat", "rice"]
+    },
+    "Straw Baler": {
+      "description": { "en": "Compresses straw into bales for easy handling", "hi": "पराली को गांठों में दबाने की मशीन" },
+      "benefits": ["Easy storage", "Sellable straw", "No burning needed"],
+      "crops": ["rice", "wheat"]
+    },
+    "Rotavator": {
+      "description": { "en": "Mixes crop residue into soil", "hi": "फसल अवशेष को मिट्टी में मिलाने की मशीन" },
+      "benefits": ["Improves soil", "Prepares seedbed", "Mixes residue"],
+      "crops": ["all"]
+    },
+    "Mulcher": {
+      "description": { "en": "Chops and spreads residue on field", "hi": "अवशेष को काटकर खेत में फैलाने की मशीन" },
+      "benefits": ["Retains moisture", "Adds organic matter", "Prevents weeds"],
+      "crops": ["sugarcane", "cotton", "vegetables"]
+    },
+    "Shredder": {
+      "description": { "en": "Cuts crop stalks into small pieces", "hi": "फसल के डंठलों को छोटे टुकड़ों में काटने की मशीन" },
+      "benefits": ["Fast decomposition", "Easy incorporation", "No burning"],
+      "crops": ["maize", "cotton", "sugarcane"]
+    },
+    "Seed Drill": {
+      "description": { "en": "Sows seeds in rows at proper depth", "hi": "बीजों को कतारों में सही गहराई पर बोने की मशीन" },
+      "benefits": ["Uniform sowing", "Saves seed", "Better germination"],
+      "crops": ["wheat", "mustard", "pulses", "soybean"]
+    },
+    "Zero Till Drill": {
+      "description": { "en": "Sows without plowing - saves fuel and time", "hi": "बिना जुताई के बुवाई - ईंधन और समय की बचत" },
+      "benefits": ["Saves fuel", "Retains moisture", "Faster sowing"],
+      "crops": ["wheat", "pulses"]
+    },
+    "Thresher": {
+      "description": { "en": "Separates grain from stalks", "hi": "दानों को डंठलों से अलग करने की मशीन" },
+      "benefits": ["Clean grain", "Fast processing", "Less labor"],
+      "crops": ["wheat", "pulses", "mustard"]
+    },
+    "Tractor": {
+      "description": { "en": "Main power source for farm operations", "hi": "खेती के कामों के लिए मुख्य शक्ति स्रोत" },
+      "benefits": ["Versatile", "Powerful", "Essential"],
+      "crops": ["all"]
+    },
+    "Sprayer": {
+      "description": { "en": "Applies pesticides and fertilizers", "hi": "कीटनाशक और उर्वरक छिड़कने की मशीन" },
+      "benefits": ["Uniform application", "Saves chemicals", "Fast coverage"],
+      "crops": ["all"]
+    },
+    "Transplanter": {
+      "description": { "en": "Plants seedlings automatically", "hi": "पौधों को स्वचालित रूप से लगाने की मशीन" },
+      "benefits": ["Uniform spacing", "Saves labor", "Fast planting"],
+      "crops": ["rice", "tomato", "vegetables"]
+    },
+    "Potato Planter": {
+      "description": { "en": "Plants potato tubers at proper spacing", "hi": "आलू के बीजों को सही दूरी पर लगाने की मशीन" },
+      "benefits": ["Uniform planting", "Proper depth", "Saves labor"],
+      "crops": ["potato"]
+    },
+    "Potato Digger": {
+      "description": { "en": "Digs and collects potatoes from soil", "hi": "मिट्टी से आलू निकालने की मशीन" },
+      "benefits": ["Fast harvesting", "Less damage", "Saves labor"],
+      "crops": ["potato"]
+    },
+    "Groundnut Digger": {
+      "description": { "en": "Digs and lifts groundnut plants", "hi": "मूंगफली के पौधों को निकालने की मशीन" },
+      "benefits": ["Complete extraction", "Less loss", "Fast"],
+      "crops": ["groundnut"]
+    },
+    "Sugarcane Harvester": {
+      "description": { "en": "Cuts and collects sugarcane stalks", "hi": "गन्ने की कटाई और संग्रह की मशीन" },
+      "benefits": ["Fast cutting", "Clean cut", "Reduces labor"],
+      "crops": ["sugarcane"]
+    },
+    "Cotton Picker": {
+      "description": { "en": "Picks cotton bolls from plants", "hi": "पौधों से कपास चुनने की मशीन" },
+      "benefits": ["Clean picking", "Fast", "Reduces labor"],
+      "crops": ["cotton"]
+    },
+    "Maize Harvester": {
+      "description": { "en": "Harvests maize cobs and stalks", "hi": "मक्के की भुट्टे और डंठल काटने की मशीन" },
+      "benefits": ["Complete harvest", "Handles stalks", "Efficient"],
+      "crops": ["maize"]
+    },
+    "Fodder Harvester": {
+      "description": { "en": "Cuts and chops fodder crops", "hi": "चारा फसलों को काटने और टुकड़े करने की मशीन" },
+      "benefits": ["Fresh fodder", "Easy feeding", "Fast processing"],
+      "crops": ["jowar", "bajra", "maize"]
+    },
+    "Onion Harvester": {
+      "description": { "en": "Digs and collects onions", "hi": "प्याज निकालने और इकट्ठा करने की मशीन" },
+      "benefits": ["Less damage", "Fast", "Clean harvest"],
+      "crops": ["onion"]
+    },
+    "Onion Planter": {
+      "description": { "en": "Plants onion sets at proper spacing", "hi": "प्याज के बीज सही दूरी पर लगाने की मशीन" },
+      "benefits": ["Uniform spacing", "Fast planting", "Saves labor"],
+      "crops": ["onion"]
+    },
+    "Laser Leveler": {
+      "description": { "en": "Levels field with precision using laser", "hi": "लेज़र से खेत को समतल करने की मशीन" },
+      "benefits": ["Water savings", "Uniform irrigation", "Better yield"],
+      "crops": ["rice", "wheat", "all"]
+    },
+    "Disc Harrow": {
+      "description": { "en": "Breaks soil clods and mixes residue", "hi": "मिट्टी के ढेलों को तोड़ने और अवशेष मिलाने की मशीन" },
+      "benefits": ["Breaks clods", "Mixes residue", "Prepares soil"],
+      "crops": ["all"]
+    },
+    "Cultivator": {
+      "description": { "en": "Loosens and aerates soil", "hi": "मिट्टी को ढीला और हवादार करने की मशीन" },
+      "benefits": ["Weed control", "Soil aeration", "Moisture retention"],
+      "crops": ["all"]
+    },
+    "Ridger": {
+      "description": { "en": "Makes ridges for planting", "hi": "बुवाई के लिए मेड़ बनाने की मशीन" },
+      "benefits": ["Drainage", "Easy irrigation", "Prevents waterlogging"],
+      "crops": ["potato", "sugarcane", "vegetables"]
+    },
+    "Trench Digger": {
+      "description": { "en": "Digs trenches for sugarcane planting", "hi": "गन्ना बोने के लिए नाली खोदने की मशीन" },
+      "benefits": ["Uniform trenches", "Saves labor", "Proper depth"],
+      "crops": ["sugarcane"]
+    },
+    "Ratoon Manager": {
+      "description": { "en": "Manages sugarcane ratoon crop", "hi": "गन्ने की पेड़ी फसल प्रबंधन की मशीन" },
+      "benefits": ["Better ratoon", "Removes stubble", "Improves yield"],
+      "crops": ["sugarcane"]
+    }
+  }
+}
