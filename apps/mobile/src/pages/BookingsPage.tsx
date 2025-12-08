@@ -1,23 +1,25 @@
 import { useState, useEffect } from 'react'
 import { Calendar, Clock, X } from 'lucide-react'
 import { getBookings, cancelBooking, type Booking } from '../lib/api'
+import { useAuth } from '../context/AuthContext'
 import './BookingsPage.css'
 
-// Demo farmer ID - replace with actual auth
-const FARMER_ID = 'farmer-demo'
-
 export default function BookingsPage() {
+  const { user } = useAuth()
   const [bookings, setBookings] = useState<Booking[]>([])
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState<'all' | 'active' | 'past'>('all')
 
   useEffect(() => {
-    loadBookings()
-  }, [])
+    if (user?.id) {
+      loadBookings()
+    }
+  }, [user])
 
   const loadBookings = async () => {
+    if (!user?.id) return
     try {
-      const data = await getBookings(FARMER_ID)
+      const data = await getBookings(user.id)
       setBookings(data)
     } catch (err) {
       console.error('Failed to load bookings:', err)

@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { ArrowLeft, Thermometer, Fuel, Gauge, Activity, MapPin, AlertTriangle, Calendar } from 'lucide-react'
 import { useSocket } from '../context/SocketContext'
+import { useAuth } from '../context/AuthContext'
 import { createBooking } from '../lib/api'
 import './MachineDetailPage.css'
 
@@ -9,6 +10,7 @@ export default function MachineDetailPage() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
   const { machines } = useSocket()
+  const { user } = useAuth()
   const machine = machines.get(id || '')
   
   const [showBookingModal, setShowBookingModal] = useState(false)
@@ -46,7 +48,7 @@ export default function MachineDetailPage() {
     try {
       await createBooking({
         machine_id: machine.id,
-        farmer_id: 'farmer-demo', // TODO: Replace with actual farmer ID
+        farmer_id: user?.id || 'unknown',
         scheduled_date: bookingDate,
         notes: bookingNotes
       })
