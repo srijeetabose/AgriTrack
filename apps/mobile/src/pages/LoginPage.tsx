@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { Leaf, Phone, Lock, Eye, EyeOff, AlertCircle, Info, User, MapPin, ArrowLeft, Navigation, Loader } from 'lucide-react';
+import { Geolocation } from '@capacitor/geolocation';
 import './LoginPage.css';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
@@ -40,80 +41,69 @@ export default function LoginPage() {
     setLocationLoading(true);
     setLocationError('');
 
-    if (!navigator.geolocation) {
-      setLocationError('GPS not supported on this device');
-      setLocationLoading(false);
-      return;
-    }
-
-    navigator.geolocation.getCurrentPosition(
-      async (position) => {
-        const { latitude, longitude } = position.coords;
-        
-        try {
-          // Use OpenStreetMap Nominatim for reverse geocoding (free, no API key needed)
-          const response = await fetch(
-            `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&addressdetails=1`,
-            {
-              headers: {
-                'Accept-Language': 'en',
-                'User-Agent': 'AgriTrack-App'
-              }
-            }
-          );
-          
-          const data = await response.json();
-          
-          if (data && data.address) {
-            const addr = data.address;
-            
-            // Extract village/town/city
-            const villageValue = addr.village || addr.town || addr.city || addr.suburb || addr.hamlet || '';
-            if (villageValue) setVillage(villageValue);
-            
-            // Extract district
-            const districtValue = addr.county || addr.state_district || addr.district || '';
-            if (districtValue) setDistrict(districtValue);
-            
-            // Extract state
-            const stateValue = addr.state || '';
-            if (stateValue) setState(stateValue);
-            
-            setSuccess('📍 Location detected successfully!');
-            setTimeout(() => setSuccess(''), 3000);
-          } else {
-            setLocationError('Could not detect location details');
-          }
-        } catch (err) {
-          console.error('Geocoding error:', err);
-          setLocationError('Failed to get address from location');
-        }
-        
+    try {
+      // First, request permission using Capacitor (this shows the native permission dialog)
+      const permissionStatus = await Geolocation.requestPermissions();
+      
+      if (permissionStatus.location !== 'granted') {
+        setLocationError('Location permission denied. Please allow location access in Settings.');
         setLocationLoading(false);
-      },
-      (err) => {
-        console.error('GPS error:', err);
-        switch (err.code) {
-          case err.PERMISSION_DENIED:
-            setLocationError('Location permission denied. Please enable GPS.');
-            break;
-          case err.POSITION_UNAVAILABLE:
-            setLocationError('Location unavailable. Please try again.');
-            break;
-          case err.TIMEOUT:
-            setLocationError('Location request timed out. Please try again.');
-            break;
-          default:
-            setLocationError('Failed to get location');
-        }
-        setLocationLoading(false);
-      },
-      {
-        enableHighAccuracy: true,
-        timeout: 15000,
-        maximumAge: 0
+        return;
       }
-    );
+
+      // Get current position using Capacitor
+      const position = await Geolocation.getCurrentPosition({
+        enableHighAccuracy: true,
+        timeout: 15000
+      });
+
+      const { latitude, longitude } = position.coords;
+      
+      // Use OpenStreetMap Nominatim for reverse geocoding (free, no API key needed)
+      const response = await fetch(
+        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&addressdetails=1`,
+        {
+          headers: {
+            'Accept-Language': 'en',
+            'User-Agent': 'AgriTrack-App'
+          }
+        }
+      );
+      
+      const data = await response.json();
+      
+      if (data && data.address) {
+        const addr = data.address;
+        
+        // Extract village/town/city
+        const villageValue = addr.village || addr.town || addr.city || addr.suburb || addr.hamlet || '';
+        if (villageValue) setVillage(villageValue);
+        
+        // Extract district
+        const districtValue = addr.county || addr.state_district || addr.district || '';
+        if (districtValue) setDistrict(districtValue);
+        
+        // Extract state
+        const stateValue = addr.state || '';
+        if (stateValue) setState(stateValue);
+        
+        setSuccess('📍 Location detected successfully!');
+        setTimeout(() => setSuccess(''), 3000);
+      } else {
+        setLocationError('Could not detect location details');
+      }
+    } catch (err: any) {
+      console.error('Location error:', err);
+      if (err.message?.includes('denied') || err.message?.includes('permission')) {
+        setLocationError('Location permission denied. Please enable in Settings.');
+      } else if (err.message?.includes('timeout')) {
+        setLocationError('Location request timed out. Please try again.');
+      } else {
+        setLocationError('Failed to get location. Please try again.');
+      }
+    }
+    
+    setLocationLoading(false);
   };
 
   const handleLogin = async (e: React.FormEvent) => {
