@@ -89,14 +89,14 @@ const DEMO_CREDENTIALS = {
       phone: '+917980638514', 
       pin: '1234', 
       name: 'Srijbasu',
-      district: 'Kolkata',
-      state: 'West Bengal',
-      village: 'Demo Village',
-      farm_size: 10,
-      green_certified: true,
-      green_credits: 100,
-      crops: ['Rice', 'Wheat'],
-      aadhaar_last4: '0000'
+      district: '',
+      state: '',
+      village: '',
+      farm_size: 0,
+      green_certified: false,
+      green_credits: 0,
+      crops: [],
+      aadhaar_last4: ''
     }
   ]
 };

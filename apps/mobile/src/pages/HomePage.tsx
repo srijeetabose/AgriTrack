@@ -1,199 +1,148 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Tractor, AlertTriangle, MapPin, Calendar, Award, TrendingUp, ShoppingBag, ChevronRight } from 'lucide-react'
-import { useSocket } from '../context/SocketContext'
+import { Tractor, BookOpen, Activity, MapPin, Clock, ChevronRight, Mic } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
-import { getAnalytics } from '../lib/api'
-import MyHarvestSlot from '../components/MyHarvestSlot'
 import './HomePage.css'
 
-interface Stats {
-  totalMachines: number
-  activeMachines: number
-  idleMachines: number
-  offlineMachines: number
-  alertCount: number
-  total?: number
-  active?: number
-  idle?: number
-  offline?: number
-  alerts?: number
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001'
+
+interface Machine {
+  id: string
+  name?: string
+  state: string
+  gps?: { lat: number; lng: number }
+  distance?: {
+    km: number
+    direction: string
+    eta: { minutes: number; formatted: string }
+  }
 }
 
 export default function HomePage() {
   const navigate = useNavigate()
-  const { machines, connected } = useSocket()
   const { user } = useAuth()
-  const [stats, setStats] = useState<Stats | null>(null)
+  const [machines, setMachines] = useState<Machine[]>([])
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    getAnalytics()
-      .then(setStats)
-      .catch(console.error)
+    fetchMachines()
   }, [])
 
-  const realtimeStats = {
-    total: machines.size,
-    active: Array.from(machines.values()).filter(m => m.state === 'active').length,
-    idle: Array.from(machines.values()).filter(m => m.state === 'idle').length,
-    offline: Array.from(machines.values()).filter(m => m.state === 'off').length,
-    alerts: Array.from(machines.values()).reduce((sum, m) => sum + (m.alerts?.length || 0), 0)
+  const fetchMachines = async () => {
+    setLoading(true)
+    try {
+      const response = await fetch(`${API_URL}/api/v1/machines/available?limit=5`)
+      const data = await response.json()
+      setMachines(data.machines || [])
+    } catch (error) {
+      console.error('Failed to fetch machines:', error)
+    } finally {
+      setLoading(false)
+    }
   }
-
-  const displayStats = connected && machines.size > 0 
-    ? realtimeStats 
-    : stats 
-      ? { 
-          total: stats.totalMachines,
-          active: stats.activeMachines,
-          idle: stats.idleMachines,
-          offline: stats.offlineMachines,
-          alerts: stats.alertCount
-        }
-      : null
 
   return (
     <div className="home-page">
-      {/* Welcome Section */}
-      <section className="welcome-section">
-        <h2>Welcome, {user?.name?.split(' ')[0] || 'Farmer'}! 👋</h2>
-        <p>Find and book CRM machinery near you</p>
-      </section>
-
-      {/* Green Status Card */}
-      {user && (
-        <section className="green-status-section" onClick={() => navigate('/green-certificate')}>
-          <div className={`green-status-card ${user.green_certified ? 'certified' : 'not-certified'}`}>
-            <div className="green-status-left">
-              <Award size={28} />
-              <div className="green-status-info">
-                <span className="green-status-label">
-                  {user.green_certified ? 'Green Certified ✓' : 'Get Green Certified'}
-                </span>
-                <span className="green-status-credits">
-                  {user.green_credits || 0} Credits Earned
-                </span>
-              </div>
-            </div>
-            <ChevronRight size={20} />
-          </div>
-        </section>
-      )}
-
-      {/* My Harvest Slot */}
-      <section className="harvest-section">
-        <MyHarvestSlot />
-      </section>
-
-      {/* Stats Grid */}
-      <section className="stats-section">
-        <div className="stats-grid">
-          <div className="stat-card" onClick={() => navigate('/machines')}>
-            <div className="stat-icon active">
-              <Tractor size={24} />
-            </div>
-            <div className="stat-info">
-              <span className="stat-value">{displayStats?.active || 0}</span>
-              <span className="stat-label">Active</span>
-            </div>
-          </div>
-          
-          <div className="stat-card" onClick={() => navigate('/machines')}>
-            <div className="stat-icon idle">
-              <Tractor size={24} />
-            </div>
-            <div className="stat-info">
-              <span className="stat-value">{displayStats?.idle || 0}</span>
-              <span className="stat-label">Available</span>
-            </div>
-          </div>
-
-          <div className="stat-card alert" onClick={() => navigate('/machines')}>
-            <div className="stat-icon alert">
-              <AlertTriangle size={24} />
-            </div>
-            <div className="stat-info">
-              <span className="stat-value">{displayStats?.alerts || 0}</span>
-              <span className="stat-label">Alerts</span>
-            </div>
-          </div>
-
-          <div className="stat-card" onClick={() => navigate('/bookings')}>
-            <div className="stat-icon booking">
-              <Calendar size={24} />
-            </div>
-            <div className="stat-info">
-              <span className="stat-value">--</span>
-              <span className="stat-label">Bookings</span>
-            </div>
+      {/* Header */}
+      <div className="home-header">
+        <div className="header-left">
+          <Tractor size={28} />
+          <div>
+            <h1>AgriTrack</h1>
+            <p>Farmer Portal</p>
           </div>
         </div>
+      </div>
+
+      {/* Welcome */}
+      <section className="welcome-card">
+        <h2>Welcome, {user?.name?.split(' ')[0] || 'Farmer'}! 👋</h2>
+        <p>Smart India Hackathon 2025</p>
       </section>
 
       {/* Quick Actions */}
-      <section className="actions-section">
-        <h3>Quick Actions</h3>
-        <div className="action-cards">
-          <div className="action-card" onClick={() => navigate('/machines')}>
-            <MapPin size={32} className="action-icon" />
-            <div>
-              <h4>Find Nearby</h4>
-              <p>Browse available machinery</p>
-            </div>
+      <section className="quick-actions">
+        <div className="action-card" onClick={() => navigate('/machines')}>
+          <div className="action-icon green">
+            <BookOpen size={28} />
           </div>
-          <div className="action-card mandi" onClick={() => navigate('/marketplace')}>
-            <ShoppingBag size={32} className="action-icon" />
-            <div>
-              <h4>Mandi Prices</h4>
-              <p>Today's crop rates</p>
-            </div>
-            {user?.green_certified && <span className="bonus-tag">+5% Bonus</span>}
+          <div className="action-text">
+            <h3>Book Machine</h3>
+            <p>Reserve equipment for your field</p>
           </div>
+          <ChevronRight size={20} className="chevron" />
+        </div>
+
+        <div className="action-card" onClick={() => navigate('/bookings')}>
+          <div className="action-icon blue">
+            <Activity size={28} />
+          </div>
+          <div className="action-text">
+            <h3>My Bookings</h3>
+            <p>Track your reservations</p>
+          </div>
+          <ChevronRight size={20} className="chevron" />
         </div>
       </section>
 
-      {/* Green Benefits Preview */}
-      {user?.green_certified && (
-        <section className="benefits-preview">
-          <h3>🌿 Your Green Benefits</h3>
-          <div className="benefits-scroll">
-            <div className="benefit-chip">
-              <TrendingUp size={16} />
-              <span>5-12% Bonus on Sales</span>
-            </div>
-            <div className="benefit-chip">
-              <Award size={16} />
-              <span>Priority Booking</span>
-            </div>
-            <div className="benefit-chip">
-              <ShoppingBag size={16} />
-              <span>Premium Buyers</span>
-            </div>
-          </div>
-        </section>
-      )}
+      {/* Available Machines */}
+      <section className="machines-section">
+        <div className="section-header">
+          <h3>Available Machines</h3>
+          <span className="badge">Near You</span>
+        </div>
 
-      {/* Live Updates */}
-      <section className="activity-section">
-        <h3>Live Updates</h3>
-        <div className="activity-list">
-          {Array.from(machines.values())
-            .filter(m => m.alerts && m.alerts.length > 0)
-            .slice(0, 5)
-            .map(machine => (
-              <div key={machine.id} className="activity-item" onClick={() => navigate(`/machines/${machine.id}`)}>
-                <span className="activity-icon">⚠️</span>
-                <div className="activity-info">
-                  <span className="activity-title">{machine.id}</span>
-                  <span className="activity-message">{machine.alerts[0]?.message}</span>
+        <div className="machines-list">
+          {loading ? (
+            <div className="loading-state">
+              <div className="spinner"></div>
+              <p>Finding nearest machines...</p>
+            </div>
+          ) : machines.length === 0 ? (
+            <div className="empty-state">
+              <Tractor size={48} />
+              <p>No machines available at the moment</p>
+            </div>
+          ) : (
+            machines.map((machine, index) => (
+              <div
+                key={machine.id}
+                className="machine-item"
+                onClick={() => navigate(`/machines/${machine.id}`)}
+              >
+                <div className="machine-icon">
+                  <Tractor size={24} />
                 </div>
+                <div className="machine-info">
+                  <div className="machine-name">
+                    <span>{machine.name || machine.id}</span>
+                    {index === 0 && <span className="nearest-tag">NEAREST</span>}
+                  </div>
+                  <p className={machine.state === 'idle' ? 'available' : 'working'}>
+                    {machine.state === 'idle' ? '✓ Available' : '⚡ Working'}
+                  </p>
+                  {machine.distance && (
+                    <div className="machine-distance">
+                      <span><MapPin size={12} /> {machine.distance.km} km</span>
+                      <span><Clock size={12} /> {machine.distance.eta?.formatted || 'N/A'}</span>
+                    </div>
+                  )}
+                </div>
+                <ChevronRight size={20} className="chevron" />
               </div>
-            ))}
-          {machines.size === 0 && (
-            <p className="text-muted text-center" style={{ padding: '20px' }}>
-              {connected ? 'No recent alerts' : 'Connecting to server...'}
-            </p>
+            ))
           )}
+        </div>
+      </section>
+
+      {/* Voice Assistant Hint */}
+      <section className="voice-hint">
+        <div className="voice-icon">
+          <Mic size={20} />
+        </div>
+        <div>
+          <h4>Voice Assistant Available</h4>
+          <p>Use voice commands on booking page</p>
         </div>
       </section>
     </div>
