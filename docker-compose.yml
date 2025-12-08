@@ -1,0 +1,125 @@
+services:
+  # MQTT Broker
+  mqtt-broker:
+    build: ./services/mqtt-broker
+    container_name: agritrack-mqtt
+    ports:
+      - "1883:1883"
+      - "9001:9001"
+    volumes:
+      - mqtt-data:/mosquitto/data
+    restart: unless-stopped
+    networks:
+      - agritrack-network
+
+  # Central API (Node.js)
+  api:
+    build: ./apps/api
+    container_name: agritrack-api
+    ports:
+      - "3001:3001"
+    environment:
+      - PORT=3001
+      - MQTT_BROKER_URL=mqtt://mqtt-broker:1883
+      - MQTT_TOPIC=agritrack/live/sensors
+      - SUPABASE_URL=${SUPABASE_URL}
+      - SUPABASE_SERVICE_KEY=${SUPABASE_SERVICE_KEY}
+      - CLERK_WEBHOOK_SECRET=${CLERK_WEBHOOK_SECRET}
+      - AI_ENGINE_URL=http://ai-engine:8000
+      - CORS_ORIGINS=http://localhost:3000,http://localhost:5173
+      # Phase 2: Twilio SMS
+      - TWILIO_ACCOUNT_SID=${TWILIO_ACCOUNT_SID}
+      - TWILIO_AUTH_TOKEN=${TWILIO_AUTH_TOKEN}
+      - TWILIO_PHONE_NUMBER=${TWILIO_PHONE_NUMBER}
+      - ADMIN_PHONE=${ADMIN_PHONE}
+      - SMS_ENABLED=${SMS_ENABLED:-false}
+      # Phase 2: Firebase Push Notifications
+      - FIREBASE_PROJECT_ID=${FIREBASE_PROJECT_ID}
+      - FIREBASE_CLIENT_EMAIL=${FIREBASE_CLIENT_EMAIL}
+      - FIREBASE_PRIVATE_KEY=${FIREBASE_PRIVATE_KEY}
+      # Phase 2: Email (optional)
+      - SMTP_HOST=${SMTP_HOST}
+      - SMTP_PORT=${SMTP_PORT}
+      - SMTP_USER=${SMTP_USER}
+      - SMTP_PASSWORD=${SMTP_PASSWORD}
+      - EMAIL_FROM=${EMAIL_FROM}
+    depends_on:
+      - mqtt-broker
+    restart: unless-stopped
+    networks:
+      - agritrack-network
+
+  # AI Engine (Python)
+  ai-engine:
+    build: ./services/ai-engine
+    container_name: agritrack-ai
+    ports:
+      - "8000:8000"
+    environment:
+      - PORT=8000
+      - SUPABASE_URL=${SUPABASE_URL}
+      - SUPABASE_SERVICE_KEY=${SUPABASE_SERVICE_KEY}
+    restart: unless-stopped
+    networks:
+      - agritrack-network
+
+  # IoT Simulator (Python)
+  simulator:
+    build: ./services/simulator
+    container_name: agritrack-simulator
+    environment:
+      - MQTT_BROKER_HOST=mqtt-broker
+      - MQTT_BROKER_PORT=1883
+      - MQTT_TOPIC=agritrack/live/sensors
+      - NUM_MACHINES=50
+      - PUBLISH_INTERVAL=5.0
+    depends_on:
+      - mqtt-broker
+    restart: unless-stopped
+    networks:
+      - agritrack-network
+
+  # Admin Dashboard (Next.js) - Production build
+  web:
+    build:
+      context: ./apps/web
+      args:
+        - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-http://localhost:3001}
+        - NEXT_PUBLIC_WS_URL=${NEXT_PUBLIC_WS_URL:-ws://localhost:3001}
+        - NEXT_PUBLIC_AI_ENGINE_URL=${NEXT_PUBLIC_AI_ENGINE_URL:-http://localhost:8000}
+        - NEXT_PUBLIC_CROP_RESIDUE_URL=${NEXT_PUBLIC_CROP_RESIDUE_URL:-http://localhost:8001}
+    container_name: agritrack-web
+    ports:
+      - "3000:3000"
+    environment:
+      - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-http://localhost:3001}
+      - NEXT_PUBLIC_WS_URL=${NEXT_PUBLIC_WS_URL:-ws://localhost:3001}
+      - NEXT_PUBLIC_AI_ENGINE_URL=${NEXT_PUBLIC_AI_ENGINE_URL:-http://localhost:8000}
+      - NEXT_PUBLIC_CROP_RESIDUE_URL=${NEXT_PUBLIC_CROP_RESIDUE_URL:-http://localhost:8001}
+      - NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=${NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY}
+    depends_on:
+      - api
+      - ai-engine
+      - crop-residue
+    restart: unless-stopped
+    networks:
+      - agritrack-network
+
+  # Crop Residue Management Service (Python FastAPI)
+  crop-residue:
+    build: ./services/crop-residue
+    container_name: agritrack-crop-residue
+    ports:
+      - "8001:8001"
+    environment:
+      - PORT=8001
+    restart: unless-stopped
+    networks:
+      - agritrack-network
+
+networks:
+  agritrack-network:
+    driver: bridge
+
+volumes:
+  mqtt-data:

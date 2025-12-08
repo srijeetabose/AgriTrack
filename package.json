@@ -1,0 +1,33 @@
+{
+  "name": "agritrack",
+  "version": "1.0.0",
+  "private": true,
+  "description": "AgriTrack - Smart CRM Machinery Monitoring",
+  "scripts": {
+    "dev": "cd apps/web && npm run dev",
+    "install:all": "npm run install:api && npm run install:web",
+    "install:api": "cd apps/api && npm install",
+    "install:web": "cd apps/web && npm install",
+    "dev:api": "cd apps/api && npm run dev",
+    "dev:web": "cd apps/web && npm run dev",
+    "build:web": "cd apps/web && npm run build",
+    "start:api": "cd apps/api && npm start",
+    "start:web": "cd apps/web && npm start",
+    "docker:up": "docker-compose up -d",
+    "docker:down": "docker-compose down",
+    "docker:logs": "docker-compose logs -f"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/KD-3030/AgriTrack.git"
+  },
+  "keywords": [
+    "agritrack",
+    "iot",
+    "agriculture",
+    "machinery",
+    "monitoring"
+  ],
+  "author": "KD-3030",
+  "license": "MIT"
+}

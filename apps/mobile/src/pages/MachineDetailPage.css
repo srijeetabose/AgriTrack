@@ -1,0 +1,279 @@
+.detail-page {
+  min-height: 100vh;
+  background: var(--background);
+}
+
+/* Header */
+.detail-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+  background: white;
+  border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.back-btn {
+  background: none;
+  border: none;
+  padding: 8px;
+  margin: -8px;
+  cursor: pointer;
+  color: var(--text);
+}
+
+.detail-header h2 {
+  flex: 1;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+/* Content */
+.detail-content {
+  padding: 16px;
+}
+
+/* Info Card */
+.info-card {
+  background: white;
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 16px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.machine-hero {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.hero-icon {
+  font-size: 48px;
+}
+
+.machine-hero h3 {
+  font-size: 20px;
+  font-weight: 600;
+  margin: 0;
+}
+
+.machine-hero .machine-type {
+  color: var(--text-muted);
+  font-size: 14px;
+  margin: 4px 0 0 0;
+  text-transform: capitalize;
+}
+
+.location-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+/* Alerts Card */
+.alerts-card {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 16px;
+}
+
+.alerts-card h4 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--danger);
+  font-size: 14px;
+  margin: 0 0 12px 0;
+}
+
+.alerts-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.alert-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 8px 0;
+  border-bottom: 1px solid #fecaca;
+}
+
+.alert-item:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.alert-type {
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: var(--danger);
+}
+
+.alert-message {
+  font-size: 13px;
+  color: #991b1b;
+}
+
+/* Stats Card */
+.stats-card {
+  background: white;
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 16px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.stats-card h4 {
+  font-size: 14px;
+  font-weight: 600;
+  margin: 0 0 16px 0;
+}
+
+.metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+}
+
+.metric {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.metric-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.metric-icon.temp { background: #fee2e2; color: #dc2626; }
+.metric-icon.fuel { background: #fef3c7; color: #d97706; }
+.metric-icon.speed { background: #dbeafe; color: #2563eb; }
+.metric-icon.rpm { background: #dcfce7; color: #16a34a; }
+
+.metric-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.metric-value {
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.metric-label {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+/* Area Card */
+.area-card {
+  background: linear-gradient(135deg, #16a34a 0%, #15803d 100%);
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 16px;
+  color: white;
+}
+
+.area-card h4 {
+  font-size: 14px;
+  font-weight: 500;
+  margin: 0 0 8px 0;
+  opacity: 0.9;
+}
+
+.area-value {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.area-number {
+  font-size: 36px;
+  font-weight: 700;
+}
+
+.area-unit {
+  font-size: 16px;
+  opacity: 0.9;
+}
+
+/* Book Button */
+.book-btn {
+  margin-top: 8px;
+}
+
+/* Modal */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.5);
+  display: flex;
+  align-items: flex-end;
+  z-index: 1000;
+}
+
+.modal {
+  background: white;
+  width: 100%;
+  border-radius: 20px 20px 0 0;
+  padding: 24px;
+  padding-bottom: calc(24px + env(safe-area-inset-bottom, 0px));
+}
+
+.modal h3 {
+  font-size: 18px;
+  margin: 0 0 20px 0;
+}
+
+.form-group {
+  margin-bottom: 16px;
+}
+
+.form-group label {
+  display: block;
+  font-size: 14px;
+  font-weight: 500;
+  margin-bottom: 6px;
+}
+
+.form-group input,
+.form-group textarea {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 16px;
+}
+
+.error-message {
+  color: var(--danger);
+  font-size: 14px;
+  margin-bottom: 16px;
+}
+
+.modal-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 20px;
+}
+
+.modal-actions .btn {
+  flex: 1;
+}

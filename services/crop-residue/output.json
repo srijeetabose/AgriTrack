@@ -1,0 +1,350 @@
+{
+  "metadata": {
+    "analysis_date": "2025-12-05T18:02:21.842704",
+    "system": "Crop Residue Management System",
+    "version": "1.0.0",
+    "region": "Punjab, Haryana, Chandigarh, Delhi-NCR"
+  },
+  "predictions": [
+    {
+      "district_id": "PB_002",
+      "district_name": "Ludhiana",
+      "state": "Punjab",
+      "lat": 30.901,
+      "lon": 75.8573,
+      "current_ndvi": 0.1441,
+      "ndvi_decline_rate": -0.023005,
+      "predicted_harvest_date": "2025-12-05",
+      "days_until_harvest": 0,
+      "priority_score": 10,
+      "status": "HARVEST_READY",
+      "confidence": 0.9753
+    },
+    {
+      "district_id": "PB_003",
+      "district_name": "Patiala",
+      "state": "Punjab",
+      "lat": 30.3398,
+      "lon": 76.3869,
+      "current_ndvi": 0.1,
+      "ndvi_decline_rate": -0.021983,
+      "predicted_harvest_date": "2025-12-05",
+      "days_until_harvest": 0,
+      "priority_score": 10,
+      "status": "HARVEST_READY",
+      "confidence": 0.9767
+    },
+    {
+      "district_id": "PB_005",
+      "district_name": "Sangrur",
+      "state": "Punjab",
+      "lat": 30.2331,
+      "lon": 75.8445,
+      "current_ndvi": 0.1,
+      "ndvi_decline_rate": -0.024003,
+      "predicted_harvest_date": "2025-12-05",
+      "days_until_harvest": 0,
+      "priority_score": 10,
+      "status": "HARVEST_READY",
+      "confidence": 0.9798
+    },
+    {
+      "district_id": "HR_001",
+      "district_name": "Karnal",
+      "state": "Haryana",
+      "lat": 29.6857,
+      "lon": 76.9905,
+      "current_ndvi": 0.1,
+      "ndvi_decline_rate": -0.020183,
+      "predicted_harvest_date": "2025-12-05",
+      "days_until_harvest": 0,
+      "priority_score": 10,
+      "status": "HARVEST_READY",
+      "confidence": 0.9788
+    },
+    {
+      "district_id": "PB_004",
+      "district_name": "Jalandhar",
+      "state": "Punjab",
+      "lat": 31.326,
+      "lon": 75.5762,
+      "current_ndvi": 0.1854,
+      "ndvi_decline_rate": -0.017864,
+      "predicted_harvest_date": "2025-12-05",
+      "days_until_harvest": 0,
+      "priority_score": 9,
+      "status": "HARVEST_READY",
+      "confidence": 0.979
+    },
+    {
+      "district_id": "HR_002",
+      "district_name": "Kurukshetra",
+      "state": "Haryana",
+      "lat": 29.9695,
+      "lon": 76.8783,
+      "current_ndvi": 0.3863,
+      "ndvi_decline_rate": -0.016004,
+      "predicted_harvest_date": "2025-12-05",
+      "days_until_harvest": 0,
+      "priority_score": 8,
+      "status": "HARVEST_READY",
+      "confidence": 0.9746
+    },
+    {
+      "district_id": "HR_003",
+      "district_name": "Ambala",
+      "state": "Haryana",
+      "lat": 30.3782,
+      "lon": 76.7767,
+      "current_ndvi": 0.3298,
+      "ndvi_decline_rate": -0.010392,
+      "predicted_harvest_date": "2025-12-05",
+      "days_until_harvest": 0,
+      "priority_score": 8,
+      "status": "HARVEST_READY",
+      "confidence": 0.8929
+    },
+    {
+      "district_id": "CH_001",
+      "district_name": "Chandigarh",
+      "state": "Chandigarh",
+      "lat": 30.7333,
+      "lon": 76.7794,
+      "current_ndvi": 0.424,
+      "ndvi_decline_rate": -0.008819,
+      "predicted_harvest_date": "2025-12-07",
+      "days_until_harvest": 2,
+      "priority_score": 6,
+      "status": "PREDICTED",
+      "confidence": 0.8959
+    },
+    {
+      "district_id": "DL_001",
+      "district_name": "Delhi-NCR",
+      "state": "Delhi",
+      "lat": 28.7041,
+      "lon": 77.1025,
+      "current_ndvi": 0.471,
+      "ndvi_decline_rate": -0.010229,
+      "predicted_harvest_date": "2025-12-11",
+      "days_until_harvest": 6,
+      "priority_score": 5,
+      "status": "PREDICTED",
+      "confidence": 0.8531
+    },
+    {
+      "district_id": "PB_001",
+      "district_name": "Amritsar",
+      "state": "Punjab",
+      "lat": 31.634,
+      "lon": 74.8723,
+      "current_ndvi": 0.5374,
+      "ndvi_decline_rate": -0.007717,
+      "predicted_harvest_date": "2025-12-22",
+      "days_until_harvest": 17,
+      "priority_score": 2,
+      "status": "PREDICTED",
+      "confidence": 0.9129
+    }
+  ],
+  "allocations": [
+    {
+      "district_id": "PB_002",
+      "district_name": "Ludhiana",
+      "state": "Punjab",
+      "priority_score": 10,
+      "machine_id": "BL_001",
+      "machine_type": "Baler",
+      "machine_capacity_acres_per_day": 15,
+      "machine_origin": {
+        "lat": 31.0,
+        "lon": 75.5
+      },
+      "district_location": {
+        "lat": 30.901,
+        "lon": 75.8573
+      },
+      "distance_km": 35.81,
+      "eta_hours": 1.2,
+      "predicted_harvest_date": "2025-12-05",
+      "days_until_harvest": 0
+    },
+    {
+      "district_id": "PB_003",
+      "district_name": "Patiala",
+      "state": "Punjab",
+      "priority_score": 10,
+      "machine_id": "HS_002",
+      "machine_type": "Happy Seeder",
+      "machine_capacity_acres_per_day": 10,
+      "machine_origin": {
+        "lat": 30.5,
+        "lon": 76.0
+      },
+      "district_location": {
+        "lat": 30.3398,
+        "lon": 76.3869
+      },
+      "distance_km": 41.15,
+      "eta_hours": 1.4,
+      "predicted_harvest_date": "2025-12-05",
+      "days_until_harvest": 0
+    },
+    {
+      "district_id": "PB_005",
+      "district_name": "Sangrur",
+      "state": "Punjab",
+      "priority_score": 10,
+      "machine_id": "HS_003",
+      "machine_type": "Happy Seeder",
+      "machine_capacity_acres_per_day": 10,
+      "machine_origin": {
+        "lat": 29.8,
+        "lon": 76.5
+      },
+      "district_location": {
+        "lat": 30.2331,
+        "lon": 75.8445
+      },
+      "distance_km": 79.39,
+      "eta_hours": 2.6,
+      "predicted_harvest_date": "2025-12-05",
+      "days_until_harvest": 0
+    },
+    {
+      "district_id": "HR_001",
+      "district_name": "Karnal",
+      "state": "Haryana",
+      "priority_score": 10,
+      "machine_id": "SMS_002",
+      "machine_type": "Super SMS",
+      "machine_capacity_acres_per_day": 12,
+      "machine_origin": {
+        "lat": 29.5,
+        "lon": 77.0
+      },
+      "district_location": {
+        "lat": 29.6857,
+        "lon": 76.9905
+      },
+      "distance_km": 20.67,
+      "eta_hours": 0.7,
+      "predicted_harvest_date": "2025-12-05",
+      "days_until_harvest": 0
+    },
+    {
+      "district_id": "PB_004",
+      "district_name": "Jalandhar",
+      "state": "Punjab",
+      "priority_score": 9,
+      "machine_id": "HS_001",
+      "machine_type": "Happy Seeder",
+      "machine_capacity_acres_per_day": 10,
+      "machine_origin": {
+        "lat": 31.5,
+        "lon": 75.0
+      },
+      "district_location": {
+        "lat": 31.326,
+        "lon": 75.5762
+      },
+      "distance_km": 58.0,
+      "eta_hours": 1.9,
+      "predicted_harvest_date": "2025-12-05",
+      "days_until_harvest": 0
+    },
+    {
+      "district_id": "HR_002",
+      "district_name": "Kurukshetra",
+      "state": "Haryana",
+      "priority_score": 8,
+      "machine_id": "BL_002",
+      "machine_type": "Baler",
+      "machine_capacity_acres_per_day": 15,
+      "machine_origin": {
+        "lat": 30.0,
+        "lon": 76.8
+      },
+      "district_location": {
+        "lat": 29.9695,
+        "lon": 76.8783
+      },
+      "distance_km": 8.27,
+      "eta_hours": 0.3,
+      "predicted_harvest_date": "2025-12-05",
+      "days_until_harvest": 0
+    },
+    {
+      "district_id": "HR_003",
+      "district_name": "Ambala",
+      "state": "Haryana",
+      "priority_score": 8,
+      "machine_id": "SMS_001",
+      "machine_type": "Super SMS",
+      "machine_capacity_acres_per_day": 12,
+      "machine_origin": {
+        "lat": 30.8,
+        "lon": 75.2
+      },
+      "district_location": {
+        "lat": 30.3782,
+        "lon": 76.7767
+      },
+      "distance_km": 158.04,
+      "eta_hours": 5.3,
+      "predicted_harvest_date": "2025-12-05",
+      "days_until_harvest": 0
+    },
+    {
+      "district_id": "CH_001",
+      "district_name": "Chandigarh",
+      "state": "Chandigarh",
+      "priority_score": 6,
+      "machine_id": "RT_001",
+      "machine_type": "Rotavator",
+      "machine_capacity_acres_per_day": 8,
+      "machine_origin": {
+        "lat": 31.2,
+        "lon": 74.9
+      },
+      "district_location": {
+        "lat": 30.7333,
+        "lon": 76.7794
+      },
+      "distance_km": 186.55,
+      "eta_hours": 6.2,
+      "predicted_harvest_date": "2025-12-07",
+      "days_until_harvest": 2
+    }
+  ],
+  "unallocated_districts": [
+    {
+      "district_id": "DL_001",
+      "district_name": "Delhi-NCR",
+      "priority_score": 5,
+      "reason": "No available machines"
+    },
+    {
+      "district_id": "PB_001",
+      "district_name": "Amritsar",
+      "priority_score": 2,
+      "reason": "No available machines"
+    }
+  ],
+  "summary": {
+    "total_districts": 10,
+    "districts_allocated": 8,
+    "districts_unallocated": 2,
+    "allocation_rate": "80.0%",
+    "total_travel_distance_km": 587.88,
+    "average_distance_km": 73.48,
+    "average_eta_hours": 2.5,
+    "machines_used_by_type": {
+      "Baler": 2,
+      "Happy Seeder": 3,
+      "Super SMS": 2,
+      "Rotavator": 1
+    },
+    "machines_remaining": 0
+  }
+}

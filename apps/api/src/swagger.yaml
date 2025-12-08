@@ -1,0 +1,1610 @@
+openapi: 3.0.3
+info:
+  title: AgriTrack Central API
+  description: |
+    AgriTrack Central Backend API for Smart CRM Machinery Monitoring.
+    
+    ## Features
+    - **Machines**: Real-time machine monitoring and management
+    - **Bookings**: Farmer booking system
+    - **Analytics**: Dashboard statistics
+    - **Notifications**: SMS, Push, and Email alerts
+    - **Geofencing**: Location-based boundaries and breach detection
+    - **Fuel Tracking**: Real-time fuel monitoring and theft detection
+    - **Maintenance**: Scheduled maintenance management
+    
+    ## WebSocket Events
+    Connect to `ws://localhost:3001` for real-time updates:
+    - `device_update`: Real-time machine state
+    - `booking_update`: Booking status changes
+    - `initial_state`: All machines on connect
+    
+  version: 2.0.0
+  contact:
+    name: AgriTrack Team
+    url: https://github.com/KD-3030/AgriTrack
+
+servers:
+  - url: http://localhost:3001
+    description: Local development server
+
+tags:
+  - name: Health
+    description: Health check endpoints
+  - name: Machines
+    description: Machine management and monitoring
+  - name: Bookings
+    description: Farmer booking management
+  - name: Analytics
+    description: Dashboard statistics and analytics
+  - name: Farmers
+    description: Farmer registration, profiles, fields, and dashboard
+  - name: Notifications
+    description: SMS, Push, and Email notification management
+  - name: Geofences
+    description: Geofencing and location boundaries
+  - name: Fuel
+    description: Fuel tracking and consumption
+  - name: Maintenance
+    description: Maintenance scheduling and tracking
+
+paths:
+  /health:
+    get:
+      tags:
+        - Health
+      summary: Health check
+      description: Check if the API server is running
+      responses:
+        '200':
+          description: Server is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: ok
+                  timestamp:
+                    type: string
+                    format: date-time
+
+  /api/v1/machines:
+    get:
+      tags:
+        - Machines
+      summary: List all machines
+      description: Get a list of all registered machines
+      responses:
+        '200':
+          description: List of machines
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Machine'
+
+  /api/v1/machines/{id}:
+    get:
+      tags:
+        - Machines
+      summary: Get machine details
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Machine details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Machine'
+
+  /api/v1/machines/realtime/all:
+    get:
+      tags:
+        - Machines
+      summary: Get all real-time machine states
+      description: Get current real-time state of all machines
+      responses:
+        '200':
+          description: Real-time machine states
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties:
+                  $ref: '#/components/schemas/MachineState'
+
+  /api/v1/bookings:
+    post:
+      tags:
+        - Bookings
+      summary: Create a new booking
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BookingRequest'
+      responses:
+        '201':
+          description: Booking created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Booking'
+
+  /api/v1/bookings/farmer/{id}:
+    get:
+      tags:
+        - Bookings
+      summary: Get farmer's bookings
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of bookings
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Booking'
+
+  /api/v1/analytics:
+    get:
+      tags:
+        - Analytics
+      summary: Get dashboard statistics
+      responses:
+        '200':
+
+  # =====================================================
+  # FARMER ENDPOINTS
+  # =====================================================
+
+  /api/v1/farmers:
+    get:
+      tags:
+        - Farmers
+      summary: List all farmers
+      description: Get a list of all registered farmers (admin only)
+      parameters:
+        - name: district
+          in: query
+          schema:
+            type: string
+        - name: state
+          in: query
+          schema:
+            type: string
+        - name: verified
+          in: query
+          schema:
+            type: boolean
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 50
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+      responses:
+        '200':
+          description: List of farmers
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  farmers:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/FarmerProfile'
+                  total:
+                    type: integer
+    post:
+      tags:
+        - Farmers
+      summary: Register a new farmer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FarmerRegistration'
+      responses:
+        '201':
+          description: Farmer registered successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  farmer:
+                    $ref: '#/components/schemas/FarmerProfile'
+        '409':
+          description: Farmer already exists
+
+  /api/v1/farmers/{id}:
+    get:
+      tags:
+        - Farmers
+      summary: Get farmer profile
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Farmer profile with fields and service history
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FarmerProfile'
+    put:
+      tags:
+        - Farmers
+      summary: Update farmer profile
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FarmerProfileUpdate'
+      responses:
+        '200':
+          description: Profile updated
+
+  /api/v1/farmers/phone/{phone}:
+    get:
+      tags:
+        - Farmers
+      summary: Get farmer by phone number
+      parameters:
+        - name: phone
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Farmer profile
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FarmerProfile'
+        '404':
+          description: Farmer not found
+
+  /api/v1/farmers/{id}/verify:
+    post:
+      tags:
+        - Farmers
+      summary: Verify farmer (admin only)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Farmer verified
+
+  /api/v1/farmers/{id}/fields:
+    get:
+      tags:
+        - Farmers
+      summary: Get farmer's fields
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of fields
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  fields:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/FarmerField'
+    post:
+      tags:
+        - Farmers
+      summary: Add a new field
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FarmerFieldRequest'
+      responses:
+        '201':
+          description: Field added
+
+  /api/v1/farmers/{farmerId}/fields/{fieldId}:
+    put:
+      tags:
+        - Farmers
+      summary: Update a field
+      parameters:
+        - name: farmerId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: fieldId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FarmerFieldRequest'
+      responses:
+        '200':
+          description: Field updated
+    delete:
+      tags:
+        - Farmers
+      summary: Delete a field
+      parameters:
+        - name: farmerId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: fieldId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Field deleted
+
+  /api/v1/farmers/{id}/dashboard:
+    get:
+      tags:
+        - Farmers
+      summary: Get farmer dashboard data
+      description: Returns profile, stats, recent bookings, and service history
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Dashboard data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FarmerDashboard'
+
+  /api/v1/farmers/{id}/bookings:
+    get:
+      tags:
+        - Farmers
+      summary: Get farmer's bookings
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: status
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of bookings
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  bookings:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Booking'
+
+  /api/v1/farmers/{id}/transactions:
+    get:
+      tags:
+        - Farmers
+      summary: Get farmer's transaction history
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of transactions
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  transactions:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/FarmerTransaction'
+
+  /api/v1/farmers/{id}/notifications:
+    get:
+      tags:
+        - Farmers
+      summary: Get farmer's notifications
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: unread_only
+          in: query
+          schema:
+            type: boolean
+      responses:
+        '200':
+          description: List of notifications
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  notifications:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/FarmerNotification'
+
+  /api/v1/farmers/{id}/services:
+    post:
+      tags:
+        - Farmers
+      summary: Record a service for farmer
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ServiceRecord'
+      responses:
+        '201':
+          description: Service recorded
+
+  /api/v1/farmers/{id}/services/{serviceId}/feedback:
+    post:
+      tags:
+        - Farmers
+      summary: Add feedback for a service
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: serviceId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                rating:
+                  type: integer
+                  minimum: 1
+                  maximum: 5
+                feedback:
+                  type: string
+      responses:
+        '200':
+          description: Feedback added
+          description: Dashboard analytics data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Analytics'
+
+  /api/v1/notifications/preferences/{userId}:
+    get:
+      tags:
+        - Notifications
+      summary: Get user notification preferences
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: User preferences
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotificationPreferences'
+
+  /api/v1/notifications/preferences:
+    post:
+      tags:
+        - Notifications
+      summary: Save notification preferences
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NotificationPreferences'
+      responses:
+        '200':
+          description: Preferences saved
+
+  /api/v1/notifications/push-token:
+    post:
+      tags:
+        - Notifications
+      summary: Register push notification token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                userId:
+                  type: string
+                token:
+                  type: string
+                platform:
+                  type: string
+                  enum: [ios, android, web]
+      responses:
+        '200':
+          description: Token registered
+
+  /api/v1/geofences:
+    get:
+      tags:
+        - Geofences
+      summary: List all geofences
+      responses:
+        '200':
+          description: List of geofences
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Geofence'
+    post:
+      tags:
+        - Geofences
+      summary: Create a geofence
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GeofenceRequest'
+      responses:
+        '201':
+          description: Geofence created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Geofence'
+
+  /api/v1/geofences/{id}:
+    get:
+      tags:
+        - Geofences
+      summary: Get geofence with machines
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Geofence details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Geofence'
+    put:
+      tags:
+        - Geofences
+      summary: Update geofence
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GeofenceRequest'
+      responses:
+        '200':
+          description: Geofence updated
+    delete:
+      tags:
+        - Geofences
+      summary: Delete geofence
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Geofence deleted
+
+  /api/v1/geofences/{id}/breaches:
+    get:
+      tags:
+        - Geofences
+      summary: Get breach history
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Breach history
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/GeofenceBreach'
+
+  /api/v1/fuel/{machineId}:
+    get:
+      tags:
+        - Fuel
+      summary: Get fuel stats for machine
+      parameters:
+        - name: machineId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Fuel statistics
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FuelStats'
+
+  /api/v1/fuel/{machineId}/history:
+    get:
+      tags:
+        - Fuel
+      summary: Get fuel history
+      parameters:
+        - name: machineId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: hours
+          in: query
+          schema:
+            type: integer
+            default: 24
+      responses:
+        '200':
+          description: Fuel history
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/FuelReading'
+
+  /api/v1/fuel/{machineId}/refueling:
+    get:
+      tags:
+        - Fuel
+      summary: Get refueling events
+      parameters:
+        - name: machineId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Refueling events
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/RefuelingEvent'
+    post:
+      tags:
+        - Fuel
+      summary: Record refueling event
+      parameters:
+        - name: machineId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                liters:
+                  type: number
+                cost:
+                  type: number
+                odometer:
+                  type: number
+      responses:
+        '201':
+          description: Refueling recorded
+
+  /api/v1/fuel/fleet/summary:
+    get:
+      tags:
+        - Fuel
+      summary: Fleet fuel summary
+      responses:
+        '200':
+          description: Fleet fuel statistics
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FleetFuelSummary'
+
+  /api/v1/maintenance/types:
+    get:
+      tags:
+        - Maintenance
+      summary: Get maintenance types
+      responses:
+        '200':
+          description: List of maintenance types
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                    name:
+                      type: string
+                    intervalDays:
+                      type: integer
+
+  /api/v1/maintenance/summary:
+    get:
+      tags:
+        - Maintenance
+      summary: Fleet maintenance summary
+      responses:
+        '200':
+          description: Maintenance summary
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MaintenanceSummary'
+
+  /api/v1/maintenance/upcoming:
+    get:
+      tags:
+        - Maintenance
+      summary: Get upcoming maintenance
+      parameters:
+        - name: days
+          in: query
+          schema:
+            type: integer
+            default: 7
+      responses:
+        '200':
+          description: Upcoming maintenance schedules
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/MaintenanceSchedule'
+
+  /api/v1/maintenance/overdue:
+    get:
+      tags:
+        - Maintenance
+      summary: Get overdue maintenance
+      responses:
+        '200':
+          description: Overdue maintenance schedules
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/MaintenanceSchedule'
+
+  /api/v1/maintenance/machine/{id}:
+    get:
+      tags:
+        - Maintenance
+      summary: Get machine maintenance schedules
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Machine maintenance schedules
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/MaintenanceSchedule'
+
+  /api/v1/maintenance:
+    post:
+      tags:
+        - Maintenance
+      summary: Create maintenance schedule
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MaintenanceRequest'
+      responses:
+        '201':
+          description: Maintenance scheduled
+
+  /api/v1/maintenance/{id}/complete:
+    post:
+      tags:
+        - Maintenance
+      summary: Mark maintenance as complete
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                notes:
+                  type: string
+                cost:
+                  type: number
+      responses:
+        '200':
+          description: Maintenance completed
+
+components:
+  schemas:
+    Machine:
+      type: object
+      properties:
+        id:
+          type: string
+        device_id:
+          type: string
+        name:
+          type: string
+        type:
+          type: string
+          enum: [tractor, harvester, seeder, sprayer]
+        status:
+          type: string
+          enum: [active, idle, maintenance, offline]
+        location:
+          type: object
+          properties:
+            lat:
+              type: number
+            lng:
+              type: number
+
+    MachineState:
+      type: object
+      properties:
+        id:
+          type: string
+        temperature:
+          type: number
+        speed:
+          type: number
+        vibration:
+          type: number
+        fuel:
+          type: number
+        gps:
+          type: array
+          items:
+            type: number
+        status:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+
+    Booking:
+      type: object
+      properties:
+        id:
+          type: string
+        farmer_id:
+          type: string
+        machine_id:
+          type: string
+        start_date:
+          type: string
+          format: date
+        end_date:
+          type: string
+          format: date
+        status:
+          type: string
+          enum: [pending, confirmed, in_progress, completed, cancelled]
+
+    BookingRequest:
+      type: object
+      required:
+        - farmerId
+        - machineId
+        - startDate
+        - endDate
+      properties:
+        farmerId:
+          type: string
+        machineId:
+          type: string
+        startDate:
+          type: string
+          format: date
+        endDate:
+          type: string
+          format: date
+        notes:
+          type: string
+
+    Analytics:
+      type: object
+      properties:
+        totalMachines:
+          type: integer
+        activeMachines:
+          type: integer
+        alertsToday:
+          type: integer
+        bookingsToday:
+          type: integer
+
+    NotificationPreferences:
+      type: object
+      properties:
+        userId:
+          type: string
+        smsEnabled:
+          type: boolean
+        pushEnabled:
+          type: boolean
+        emailEnabled:
+          type: boolean
+        alertTypes:
+          type: array
+          items:
+            type: string
+
+    Geofence:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        type:
+          type: string
+          enum: [circle, polygon]
+        center_lat:
+          type: number
+        center_lng:
+          type: number
+        radius_meters:
+          type: number
+        polygon_coords:
+          type: object
+        active:
+          type: boolean
+
+    GeofenceRequest:
+      type: object
+      required:
+        - name
+        - type
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        type:
+          type: string
+          enum: [circle, polygon]
+        centerLat:
+          type: number
+        centerLng:
+          type: number
+        radiusMeters:
+          type: number
+        polygonCoords:
+          type: object
+
+    GeofenceBreach:
+      type: object
+      properties:
+        id:
+          type: string
+        geofence_id:
+          type: string
+        device_id:
+          type: string
+        event_type:
+          type: string
+          enum: [entry, exit]
+        timestamp:
+          type: string
+          format: date-time
+        location:
+          type: object
+          properties:
+            lat:
+              type: number
+            lng:
+              type: number
+
+    FuelStats:
+      type: object
+      properties:
+        currentLevel:
+          type: number
+        consumptionRate:
+          type: number
+        estimatedRange:
+          type: number
+        lastRefuel:
+          type: string
+          format: date-time
+
+    FuelReading:
+      type: object
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+        level:
+          type: number
+        consumption:
+          type: number
+
+    RefuelingEvent:
+      type: object
+      properties:
+        id:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+        liters:
+          type: number
+        cost:
+          type: number
+        odometer:
+          type: number
+
+    FleetFuelSummary:
+      type: object
+      properties:
+        totalConsumption:
+          type: number
+        averageEfficiency:
+          type: number
+        lowFuelAlerts:
+          type: integer
+        theftAlerts:
+          type: integer
+
+    MaintenanceSchedule:
+      type: object
+      properties:
+        id:
+          type: string
+        machine_id:
+          type: string
+        type:
+          type: string
+        due_date:
+          type: string
+          format: date
+        status:
+          type: string
+          enum: [scheduled, overdue, completed]
+        notes:
+          type: string
+
+    MaintenanceRequest:
+      type: object
+      required:
+        - machineId
+        - type
+        - dueDate
+      properties:
+        machineId:
+          type: string
+        type:
+          type: string
+        dueDate:
+          type: string
+          format: date
+        recurring:
+          type: boolean
+        intervalDays:
+          type: integer
+        notes:
+          type: string
+
+    MaintenanceSummary:
+      type: object
+      properties:
+        upcoming:
+          type: integer
+        overdue:
+          type: integer
+        completedThisMonth:
+          type: integer
+
+    # =====================================================
+    # FARMER SCHEMAS
+    # =====================================================
+
+    FarmerProfile:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        user_id:
+          type: string
+          format: uuid
+        full_name:
+          type: string
+        phone:
+          type: string
+        alternate_phone:
+          type: string
+        email:
+          type: string
+        profile_image_url:
+          type: string
+        address_line1:
+          type: string
+        address_line2:
+          type: string
+        village:
+          type: string
+        district:
+          type: string
+        state:
+          type: string
+        pincode:
+          type: string
+        farming_experience_years:
+          type: integer
+        primary_crops:
+          type: array
+          items:
+            type: string
+        preferred_language:
+          type: string
+        is_verified:
+          type: boolean
+        verification_date:
+          type: string
+          format: date-time
+        is_active:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+
+    FarmerRegistration:
+      type: object
+      required:
+        - full_name
+        - phone
+        - district
+        - state
+      properties:
+        full_name:
+          type: string
+          example: Ranjit Singh
+        phone:
+          type: string
+          example: "+919876543210"
+        email:
+          type: string
+        alternate_phone:
+          type: string
+        address_line1:
+          type: string
+        address_line2:
+          type: string
+        village:
+          type: string
+          example: Khanna
+        district:
+          type: string
+          example: Ludhiana
+        state:
+          type: string
+          example: Punjab
+        pincode:
+          type: string
+        farming_experience_years:
+          type: integer
+          example: 10
+        primary_crops:
+          type: array
+          items:
+            type: string
+          example: ["wheat", "rice", "cotton"]
+        preferred_language:
+          type: string
+          example: hindi
+
+    FarmerProfileUpdate:
+      type: object
+      properties:
+        full_name:
+          type: string
+        alternate_phone:
+          type: string
+        email:
+          type: string
+        address_line1:
+          type: string
+        address_line2:
+          type: string
+        village:
+          type: string
+        pincode:
+          type: string
+        farming_experience_years:
+          type: integer
+        primary_crops:
+          type: array
+          items:
+            type: string
+        preferred_language:
+          type: string
+
+    FarmerField:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        farmer_id:
+          type: string
+          format: uuid
+        name:
+          type: string
+          example: Main Field
+        area_acres:
+          type: number
+          example: 12.5
+        village:
+          type: string
+        district:
+          type: string
+        state:
+          type: string
+        latitude:
+          type: number
+        longitude:
+          type: number
+        boundary_coords:
+          type: array
+          items:
+            type: object
+            properties:
+              lat:
+                type: number
+              lng:
+                type: number
+        soil_type:
+          type: string
+          enum: [alluvial, black, red, laterite, sandy, loamy]
+        irrigation_type:
+          type: string
+          enum: [canal, tubewell, rainfed, drip, sprinkler]
+        current_crop:
+          type: string
+        last_harvest_date:
+          type: string
+          format: date
+        next_sowing_date:
+          type: string
+          format: date
+        is_active:
+          type: boolean
+
+    FarmerFieldRequest:
+      type: object
+      required:
+        - name
+        - area_acres
+      properties:
+        name:
+          type: string
+        area_acres:
+          type: number
+        village:
+          type: string
+        district:
+          type: string
+        state:
+          type: string
+        latitude:
+          type: number
+        longitude:
+          type: number
+        boundary_coords:
+          type: object
+        soil_type:
+          type: string
+        irrigation_type:
+          type: string
+        current_crop:
+          type: string
+
+    FarmerDashboard:
+      type: object
+      properties:
+        profile:
+          $ref: '#/components/schemas/FarmerProfile'
+        stats:
+          type: object
+          properties:
+            total_fields:
+              type: integer
+            total_acres:
+              type: number
+            total_bookings:
+              type: integer
+            completed_services:
+              type: integer
+            pending_payments:
+              type: integer
+        recent_bookings:
+          type: array
+          items:
+            $ref: '#/components/schemas/Booking'
+        upcoming_services:
+          type: array
+          items:
+            $ref: '#/components/schemas/Booking'
+        service_history:
+          type: array
+          items:
+            $ref: '#/components/schemas/ServiceHistory'
+
+    ServiceHistory:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        farmer_id:
+          type: string
+          format: uuid
+        booking_id:
+          type: string
+          format: uuid
+        field_id:
+          type: string
+          format: uuid
+        machine_id:
+          type: string
+          format: uuid
+        service_type:
+          type: string
+          example: harvesting
+        service_date:
+          type: string
+          format: date
+        acres_serviced:
+          type: number
+        hours_worked:
+          type: number
+        rate_per_acre:
+          type: number
+        total_amount:
+          type: number
+        payment_status:
+          type: string
+          enum: [pending, partial, completed, refunded]
+        payment_method:
+          type: string
+        rating:
+          type: integer
+          minimum: 1
+          maximum: 5
+        feedback:
+          type: string
+
+    ServiceRecord:
+      type: object
+      required:
+        - service_type
+        - service_date
+      properties:
+        booking_id:
+          type: string
+        field_id:
+          type: string
+        machine_id:
+          type: string
+        service_type:
+          type: string
+        service_date:
+          type: string
+          format: date
+        acres_serviced:
+          type: number
+        hours_worked:
+          type: number
+        rate_per_acre:
+          type: number
+        total_amount:
+          type: number
+        payment_method:
+          type: string
+
+    FarmerTransaction:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        farmer_id:
+          type: string
+          format: uuid
+        booking_id:
+          type: string
+          format: uuid
+        transaction_type:
+          type: string
+          enum: [payment, refund, deposit, advance]
+        amount:
+          type: number
+        payment_method:
+          type: string
+        transaction_reference:
+          type: string
+        status:
+          type: string
+          enum: [pending, completed, failed, cancelled]
+        transaction_date:
+          type: string
+          format: date-time
+
+    FarmerNotification:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        farmer_id:
+          type: string
+          format: uuid
+        type:
+          type: string
+        title:
+          type: string
+        message:
+          type: string
+        channel:
+          type: string
+          enum: [sms, push, email, whatsapp]
+        delivery_status:
+          type: string
+          enum: [pending, sent, delivered, failed]
+        is_read:
+          type: boolean
+        read_at:
+          type: string
+          format: date-time
+        created_at:
+          type: string
+          format: date-time
