@@ -542,6 +542,137 @@ class DatabaseService {
   }
 
   // ═══════════════════════════════════════════════════════════════════
+  // FARMERS
+  // ═══════════════════════════════════════════════════════════════════
+
+  /**
+   * Get farmer by phone number
+   */
+  async getFarmerByPhone(phone) {
+    if (!this.isConnected) return { data: null, error: null };
+
+    // Clean phone number
+    const cleanPhone = phone.replace(/[\s\-+]/g, '').replace(/^91/, '');
+
+    return await this.supabase
+      .from('farmers')
+      .select('*')
+      .or(`phone.eq.${cleanPhone},phone.eq.+91${cleanPhone}`)
+      .single();
+  }
+
+  /**
+   * Get farmer by ID
+   */
+  async getFarmerById(farmerId) {
+    if (!this.isConnected) return { data: null, error: null };
+
+    return await this.supabase
+      .from('farmers')
+      .select('*')
+      .eq('id', farmerId)
+      .single();
+  }
+
+  /**
+   * Create new farmer
+   */
+  async createFarmer(farmerData) {
+    if (!this.isConnected) return { data: null, error: { message: 'Database not connected' } };
+
+    const { data, error } = await this.supabase
+      .from('farmers')
+      .insert({
+        phone: farmerData.phone,
+        pin_hash: farmerData.pin_hash,
+        name: farmerData.name,
+        district: farmerData.district || '',
+        state: farmerData.state || '',
+        village: farmerData.village || '',
+        total_land_area: farmerData.total_land_area || 0,
+        aadhaar_last4: farmerData.aadhaar_last4 || '',
+        green_certified: false,
+        green_credits: 0,
+        crops: farmerData.crops || [],
+        language_preference: farmerData.language || 'hindi'
+      })
+      .select()
+      .single();
+
+    return { data, error };
+  }
+
+  /**
+   * Update farmer profile
+   */
+  async updateFarmer(farmerId, updates) {
+    if (!this.isConnected) return { data: null, error: null };
+
+    const { data, error } = await this.supabase
+      .from('farmers')
+      .update(updates)
+      .eq('id', farmerId)
+      .select()
+      .single();
+
+    return { data, error };
+  }
+
+  /**
+   * Update farmer PIN
+   */
+  async updateFarmerPin(farmerId, newPinHash) {
+    if (!this.isConnected) return { data: null, error: null };
+
+    const { data, error } = await this.supabase
+      .from('farmers')
+      .update({ pin_hash: newPinHash })
+      .eq('id', farmerId)
+      .select()
+      .single();
+
+    return { data, error };
+  }
+
+  /**
+   * Add green credits to farmer
+   */
+  async addGreenCredits(farmerId, credits, reason) {
+    if (!this.isConnected) return { data: null, error: null };
+
+    // Get current credits
+    const { data: farmer } = await this.getFarmerById(farmerId);
+    if (!farmer) return { data: null, error: { message: 'Farmer not found' } };
+
+    const newCredits = (farmer.green_credits || 0) + credits;
+    const isCertified = newCredits >= 100; // Auto-certify at 100 credits
+
+    const { data, error } = await this.supabase
+      .from('farmers')
+      .update({ 
+        green_credits: newCredits,
+        green_certified: isCertified
+      })
+      .eq('id', farmerId)
+      .select()
+      .single();
+
+    // Log the credit transaction
+    if (!error) {
+      await this.supabase
+        .from('green_credit_logs')
+        .insert({
+          farmer_id: farmerId,
+          credits,
+          reason,
+          balance_after: newCredits
+        });
+    }
+
+    return { data, error };
+  }
+
+  // ═══════════════════════════════════════════════════════════════════
   // ANALYTICS
   // ═══════════════════════════════════════════════════════════════════
 

@@ -174,11 +174,31 @@ router.post('/farmer/login', async (req, res) => {
     // Clean phone number - remove spaces, +, 91 prefix
     const cleanPhone = phone.replace(/[\s\-+]/g, '').replace(/^91/, '');
     
-    const farmer = DEMO_CREDENTIALS.farmers.find(f => {
-      // Also clean the stored phone for comparison
+    // First check demo credentials
+    let farmer = DEMO_CREDENTIALS.farmers.find(f => {
       const storedPhone = f.phone.replace(/[\s\-+]/g, '').replace(/^91/, '');
       return storedPhone === cleanPhone && f.pin === pin;
     });
+
+    // If not found in demo, check database
+    if (!farmer && db.isConfigured()) {
+      const { data: dbFarmer, error } = await db.getFarmerByPhone(cleanPhone);
+      if (dbFarmer && dbFarmer.pin_hash === pin) {
+        farmer = {
+          id: dbFarmer.id,
+          phone: dbFarmer.phone,
+          name: dbFarmer.name,
+          district: dbFarmer.district || '',
+          state: dbFarmer.state || '',
+          village: dbFarmer.village || '',
+          farm_size: dbFarmer.total_land_area || 0,
+          green_certified: dbFarmer.green_certified || false,
+          green_credits: dbFarmer.green_credits || 0,
+          crops: dbFarmer.crops || [],
+          aadhaar_last4: dbFarmer.aadhaar_last4 || ''
+        };
+      }
+    }
 
     if (!farmer) {
       return res.status(401).json({ error: 'Invalid phone or PIN' });
@@ -206,6 +226,130 @@ router.post('/farmer/login', async (req, res) => {
   } catch (error) {
     console.error('Farmer login error:', error);
     res.status(500).json({ error: 'Login failed' });
+  }
+});
+
+// POST /api/v1/auth/farmer/register - Register new farmer
+router.post('/farmer/register', async (req, res) => {
+  try {
+    const { phone, pin, name, district, state, village, farm_size, aadhaar_last4 } = req.body;
+
+    if (!phone || !pin || !name) {
+      return res.status(400).json({ error: 'Phone, PIN, and name are required' });
+    }
+
+    if (pin.length !== 4 || !/^\d{4}$/.test(pin)) {
+      return res.status(400).json({ error: 'PIN must be exactly 4 digits' });
+    }
+
+    // Clean phone number
+    const cleanPhone = phone.replace(/[\s\-+]/g, '').replace(/^91/, '');
+
+    if (cleanPhone.length !== 10 || !/^\d{10}$/.test(cleanPhone)) {
+      return res.status(400).json({ error: 'Phone must be 10 digits' });
+    }
+
+    // Check if phone already exists in demo credentials
+    const existsInDemo = DEMO_CREDENTIALS.farmers.some(f => {
+      const storedPhone = f.phone.replace(/[\s\-+]/g, '').replace(/^91/, '');
+      return storedPhone === cleanPhone;
+    });
+
+    if (existsInDemo) {
+      return res.status(409).json({ error: 'Phone number already registered' });
+    }
+
+    // Check database if configured
+    if (db.isConfigured()) {
+      const { data: existingFarmer } = await db.getFarmerByPhone(cleanPhone);
+      if (existingFarmer) {
+        return res.status(409).json({ error: 'Phone number already registered' });
+      }
+
+      // Create farmer in database
+      const { data: newFarmer, error } = await db.createFarmer({
+        phone: cleanPhone,
+        pin_hash: pin, // In production, hash this!
+        name,
+        district: district || '',
+        state: state || '',
+        village: village || '',
+        total_land_area: farm_size || 0,
+        aadhaar_last4: aadhaar_last4 || '',
+        green_certified: false,
+        green_credits: 0,
+        crops: []
+      });
+
+      if (error) {
+        console.error('Database error:', error);
+        return res.status(500).json({ error: 'Failed to register farmer' });
+      }
+
+      const token = generateToken(newFarmer, 'farmer');
+
+      return res.status(201).json({
+        success: true,
+        message: 'Registration successful!',
+        token,
+        user: {
+          id: newFarmer.id,
+          phone: newFarmer.phone,
+          name: newFarmer.name,
+          district: newFarmer.district,
+          state: newFarmer.state,
+          village: newFarmer.village,
+          farm_size: newFarmer.total_land_area,
+          green_certified: false,
+          green_credits: 0,
+          crops: [],
+          role: 'farmer'
+        }
+      });
+    }
+
+    // If database not configured, add to in-memory demo credentials
+    const newFarmerId = `farmer_${Date.now()}`;
+    const newFarmer = {
+      id: newFarmerId,
+      phone: `+91${cleanPhone}`,
+      pin,
+      name,
+      district: district || '',
+      state: state || '',
+      village: village || '',
+      farm_size: farm_size || 0,
+      green_certified: false,
+      green_credits: 0,
+      crops: [],
+      aadhaar_last4: aadhaar_last4 || ''
+    };
+
+    DEMO_CREDENTIALS.farmers.push(newFarmer);
+
+    const token = generateToken(newFarmer, 'farmer');
+
+    res.status(201).json({
+      success: true,
+      message: 'Registration successful!',
+      token,
+      user: {
+        id: newFarmer.id,
+        phone: newFarmer.phone,
+        name: newFarmer.name,
+        district: newFarmer.district,
+        state: newFarmer.state,
+        village: newFarmer.village,
+        farm_size: newFarmer.farm_size,
+        green_certified: false,
+        green_credits: 0,
+        crops: [],
+        role: 'farmer'
+      }
+    });
+  } catch (error) {
+    console.error('Registration error:', error);
+    res.status(500).json({ error: 'Registration failed' });
   }
 });
 
