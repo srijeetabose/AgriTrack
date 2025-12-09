@@ -4,6 +4,54 @@
   padding-bottom: 80px;
 }
 
+/* Single Header */
+.home-header {
+  background: linear-gradient(135deg, #059669 0%, #0d9488 100%);
+  padding: 16px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.header-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.header-icon {
+  font-size: 28px;
+}
+
+.header-title {
+  font-size: 22px;
+  font-weight: 700;
+  color: white;
+}
+
+.header-status {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(255,255,255,0.2);
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 500;
+  color: white;
+}
+
+.status-dot {
+  width: 8px;
+  height: 8px;
+  background: #4ade80;
+  border-radius: 50%;
+  box-shadow: 0 0 6px #4ade80;
+}
+
 /* Welcome Card - Improved */
 .welcome-card {
   background: linear-gradient(135deg, #059669 0%, #0d9488 100%);

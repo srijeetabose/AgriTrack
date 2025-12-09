@@ -4,65 +4,7 @@
   min-height: 100vh;
 }
 
-/* Header */
-.header {
-  background: linear-gradient(135deg, #16a34a 0%, #15803d 100%);
-  color: white;
-  padding: 16px;
-  padding-top: calc(16px + env(safe-area-inset-top, 0px));
-  position: sticky;
-  top: 0;
-  z-index: 100;
-}
-
-.header-content {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.header-left {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.logo-icon {
-  font-size: 28px;
-}
-
-.header-title {
-  font-size: 20px;
-  font-weight: 700;
-}
-
-.connection-status {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 12px;
-  font-weight: 500;
-  padding: 4px 10px;
-  border-radius: 9999px;
-  background: rgba(255,255,255,0.2);
-}
-
-.status-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-}
-
-.connection-status.connected .status-dot {
-  background: #22c55e;
-  box-shadow: 0 0 6px #22c55e;
-}
-
-.connection-status.disconnected .status-dot {
-  background: #ef4444;
-}
-
-/* Main Content */
+/* Main Content - No header in layout */
 .main-content {
   flex: 1;
   padding-bottom: 80px;

@@ -43,7 +43,19 @@ export default function HomePage() {
 
   return (
     <div className="home-page">
-      {/* Welcome Card - No duplicate header */}
+      {/* Single Header */}
+      <header className="home-header">
+        <div className="header-brand">
+          <span className="header-icon">🚜</span>
+          <span className="header-title">AgriTrack</span>
+        </div>
+        <div className="header-status">
+          <span className="status-dot"></span>
+          Live
+        </div>
+      </header>
+
+      {/* Welcome Card */}
       <section className="welcome-card">
         <div className="welcome-greeting">
           <h2>नमस्ते, {user?.name?.split(' ')[0] || 'Farmer'}! 👋</h2>
