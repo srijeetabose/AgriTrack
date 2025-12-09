@@ -1,6 +1,7 @@
-import { useState, useRef } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
-import { ArrowLeft, Mic, MicOff, Volume2, ChevronDown, ChevronUp, Search, Leaf } from 'lucide-react'
+import { ArrowLeft, Mic, MicOff, Volume2, ChevronDown, ChevronUp, Search, Leaf, AlertCircle } from 'lucide-react'
+import { SpeechRecognition } from '@capacitor-community/speech-recognition'
 import { useAuth } from '../context/AuthContext'
 import { useSocket } from '../context/SocketContext'
 import { createBooking } from '../lib/api'
@@ -37,8 +38,13 @@ const CROP_LOOKUP = buildCropLookup()
 const NUMBER_WORDS: { [key: string]: number } = {
   'one': 1, 'two': 2, 'three': 3, 'four': 4, 'five': 5,
   'six': 6, 'seven': 7, 'eight': 8, 'nine': 9, 'ten': 10,
-  'एक': 1, 'दो': 2, 'तीन': 3, 'चार': 4, 'पांच': 5,
-  'পাঁচ': 5, 'দশ': 10, 'কুড়ি': 20,
+  'fifteen': 15, 'twenty': 20, 'twenty five': 25, 'thirty': 30,
+  'एक': 1, 'दो': 2, 'तीन': 3, 'चार': 4, 'पांच': 5, 'पाँच': 5,
+  'छह': 6, 'सात': 7, 'आठ': 8, 'नौ': 9, 'दस': 10,
+  'पंद्रह': 15, 'बीस': 20, 'पच्चीस': 25, 'तीस': 30,
+  'আধা': 0.5, 'এক': 1, 'দুই': 2, 'তিন': 3, 'চার': 4, 'পাঁচ': 5,
+  'ছয়': 6, 'সাত': 7, 'আট': 8, 'নয়': 9, 'দশ': 10,
+  'পনের': 15, 'কুড়ি': 20, 'পঁচিশ': 25, 'ত্রিশ': 30,
 }
 
 export default function BookMachinePage() {
@@ -61,7 +67,25 @@ export default function BookMachinePage() {
   const [cropSearchTerm, setCropSearchTerm] = useState('')
   const [voiceLanguage, setVoiceLanguage] = useState<'hi-IN' | 'en-IN' | 'bn-IN'>('hi-IN')
   const [isSpeaking, setIsSpeaking] = useState(false)
-  const recognitionRef = useRef<any>(null)
+  const [voiceError, setVoiceError] = useState('')
+  const [voiceSupported, setVoiceSupported] = useState(true)
+
+  // Check permissions on mount
+  useEffect(() => {
+    checkPermissions()
+  }, [])
+
+  const checkPermissions = async () => {
+    try {
+      const { speechRecognition } = await SpeechRecognition.checkPermissions()
+      if (speechRecognition === 'denied') {
+        setVoiceError('Microphone permission denied')
+        setVoiceSupported(false)
+      }
+    } catch (error) {
+      console.log('Permission check error:', error)
+    }
+  }
 
   // Filter crops based on search
   const filteredCrops = cropMachinesData.crops.filter((crop: CropData) => {
@@ -92,7 +116,6 @@ export default function BookMachinePage() {
         return
       }
     }
-    // Default to first available
     if (availableMachines[0]) {
       setSelectedMachine(availableMachines[0].id)
     }
@@ -120,54 +143,114 @@ export default function BookMachinePage() {
 
   // Find crop from voice input
   const findCropFromVoice = (text: string): CropData | null => {
+    const lowerText = text.toLowerCase()
+    
+    // Check each word
     const words = text.split(/\s+/)
     for (const word of words) {
       const cleanWord = word.replace(/[।.,!?]/g, '')
       const crop = CROP_LOOKUP[cleanWord.toLowerCase()] || CROP_LOOKUP[cleanWord]
       if (crop) return crop
     }
+    
+    // Check partial matches
+    for (const [key, crop] of Object.entries(CROP_LOOKUP)) {
+      if (lowerText.includes(key.toLowerCase()) || text.includes(key)) {
+        return crop
+      }
+    }
     return null
   }
 
   // Extract acres from text
   const extractAcres = (text: string): number | null => {
+    // Pattern for numbers followed by acre keywords
     const patterns = [
-      /(\d+(?:\.\d+)?)\s*(?:acre|acres|एकड़|বিঘা|একর)/i,
-      /(?:acre|एकड़|বিঘা)\s*(\d+)/i,
+      /(\d+(?:\.\d+)?)\s*(?:acre|acres|एकड़|बीघा|একর|বিঘা|বিঘে)/i,
+      /(?:acre|acres|एकड़|बीघा|একর|বিঘা)\s*(?:is|है|আছে)?\s*(\d+(?:\.\d+)?)/i,
+      /(\d+(?:\.\d+)?)\s*(?:land|जमीन|জমি)/i,
     ]
+    
     for (const pattern of patterns) {
       const match = text.match(pattern)
       if (match) {
-        const num = parseFloat(match[1])
-        if (!isNaN(num) && num > 0) return num
+        const num = parseFloat(match[1] || match[2])
+        if (!isNaN(num) && num > 0 && num < 10000) return num
       }
     }
-    // Check number words
+    
+    // Check for number words
     for (const [word, value] of Object.entries(NUMBER_WORDS)) {
-      if (text.includes(word)) return value
+      if (text.toLowerCase().includes(word) || text.includes(word)) {
+        return value
+      }
     }
+    
+    // Try to find any number
+    const numMatch = text.match(/(\d+)/)
+    if (numMatch) {
+      const num = parseInt(numMatch[1])
+      if (num > 0 && num < 1000) return num
+    }
+    
     return null
   }
 
   // Extract location from text
   const extractLocation = (text: string): string | null => {
     const patterns = [
-      /(?:village|गांव|গ্রাম)\s+([^\s,।]+)/i,
-      /(?:from|से|থেকে)\s+([^\s,।]+)/i,
+      /(?:village|from|at|location|गांव|गाँव|से|में|গ্রাম|থেকে)\s+(?:is\s+)?([a-zA-Z\u0900-\u097F\u0980-\u09FF]+)/i,
     ]
+    
     for (const pattern of patterns) {
       const match = text.match(pattern)
-      if (match && match[1]) return match[1]
+      if (match && match[1]) {
+        const loc = match[1].trim()
+        if (loc.length > 1 && !/^\d+$/.test(loc)) {
+          return loc.charAt(0).toUpperCase() + loc.slice(1)
+        }
+      }
     }
     return null
   }
 
-  // Handle voice command
-  const handleVoiceCommand = (command: string) => {
-    console.log('Voice command:', command)
-    const detectedLang = detectLanguage(command)
-    setVoiceLanguage(detectedLang)
+  // Extract name from text
+  const extractName = (text: string): string | null => {
+    const patterns = [
+      /(?:my name is|i am|name is|मेरा नाम|नाम|আমার নাম)\s+([a-zA-Z\u0900-\u097F\u0980-\u09FF]+(?:\s+[a-zA-Z\u0900-\u097F\u0980-\u09FF]+)?)/i,
+    ]
     
+    for (const pattern of patterns) {
+      const match = text.match(pattern)
+      if (match && match[1]) {
+        const name = match[1].trim()
+        if (name.length > 1) {
+          return name.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')
+        }
+      }
+    }
+    return null
+  }
+
+  // Extract phone from text
+  const extractPhone = (text: string): string | null => {
+    const cleanText = text.replace(/[\s-]/g, '')
+    const phoneMatch = cleanText.match(/(\d{10})/)
+    if (phoneMatch) return phoneMatch[1]
+    
+    const digits = text.match(/\d/g)
+    if (digits && digits.length >= 10) {
+      return digits.slice(0, 10).join('')
+    }
+    return null
+  }
+
+  // Handle voice command - process the transcript
+  const handleVoiceCommand = (command: string) => {
+    console.log('Processing voice command:', command)
+    setVoiceError('')
+    
+    const detectedLang = detectLanguage(command)
     let filledFields: string[] = []
     
     // Extract crop
@@ -177,6 +260,20 @@ export default function BookMachinePage() {
       setSelectedCrop(crop)
       autoSelectMachineForCrop(crop)
       filledFields.push('फसल/Crop')
+    }
+    
+    // Extract name
+    const name = extractName(command)
+    if (name && !farmerName) {
+      setFarmerName(name)
+      filledFields.push('नाम/Name')
+    }
+    
+    // Extract phone
+    const phone = extractPhone(command)
+    if (phone && !farmerPhone) {
+      setFarmerPhone(phone)
+      filledFields.push('फोन/Phone')
     }
     
     // Extract acres
@@ -196,102 +293,102 @@ export default function BookMachinePage() {
     // Provide feedback
     if (filledFields.length > 0) {
       const feedback = detectedLang === 'hi-IN' 
-        ? `${filledFields.length} जानकारी भरी गई`
-        : `Filled ${filledFields.length} fields`
+        ? `${filledFields.length} जानकारी भरी गई: ${filledFields.join(', ')}`
+        : detectedLang === 'bn-IN'
+        ? `${filledFields.length}টি তথ্য পূরণ হয়েছে`
+        : `Filled ${filledFields.length} fields: ${filledFields.join(', ')}`
       speak(feedback, detectedLang)
     } else {
-      speak(detectedLang === 'hi-IN' 
-        ? 'कृपया फसल का नाम बोलें' 
-        : 'Please say crop name', detectedLang)
+      const msg = detectedLang === 'hi-IN' 
+        ? 'कुछ समझ नहीं आया। कृपया फसल का नाम, एकड़ और गांव बोलें।' 
+        : detectedLang === 'bn-IN'
+        ? 'বুঝতে পারিনি। অনুগ্রহ করে ফসলের নাম, বিঘা এবং গ্রাম বলুন।'
+        : 'Could not understand. Please say crop name, acres and village.'
+      speak(msg, detectedLang)
     }
   }
 
-  // Toggle voice listening
+  // Start native speech recognition
+  const startListening = async () => {
+    setVoiceError('')
+    setTranscript('')
+    
+    try {
+      // Request permission first
+      const permResult = await SpeechRecognition.requestPermissions()
+      if (permResult.speechRecognition !== 'granted') {
+        setVoiceError('Microphone permission denied. Please allow in settings.')
+        return
+      }
+
+      // Check if available
+      const available = await SpeechRecognition.available()
+      if (!available.available) {
+        setVoiceError('Speech recognition not available on this device')
+        return
+      }
+
+      setIsListening(true)
+      
+      // Speak instruction
+      speak(
+        voiceLanguage === 'hi-IN' 
+          ? 'बोलिए - फसल का नाम, कितने एकड़, और गांव का नाम' 
+          : voiceLanguage === 'bn-IN'
+          ? 'বলুন - ফসলের নাম, কত বিঘা, এবং গ্রামের নাম'
+          : 'Say - crop name, how many acres, and village name',
+        voiceLanguage
+      )
+
+      // Start listening with native plugin
+      const result = await SpeechRecognition.start({
+        language: voiceLanguage,
+        maxResults: 5,
+        prompt: voiceLanguage === 'hi-IN' ? 'बोलिए...' : 'Speak now...',
+        partialResults: true,
+        popup: true, // Show native popup on Android
+      })
+
+      console.log('Speech result:', result)
+      
+      if (result.matches && result.matches.length > 0) {
+        const bestMatch = result.matches[0]
+        setTranscript(bestMatch)
+        handleVoiceCommand(bestMatch)
+      } else {
+        setVoiceError('No speech detected. Please try again.')
+      }
+      
+    } catch (error: any) {
+      console.error('Speech recognition error:', error)
+      if (error.message?.includes('permission')) {
+        setVoiceError('Microphone permission denied')
+      } else if (error.message?.includes('No match')) {
+        setVoiceError('Could not understand. Please try again.')
+      } else {
+        setVoiceError('Voice error: ' + (error.message || 'Unknown error'))
+      }
+    } finally {
+      setIsListening(false)
+    }
+  }
+
+  // Stop listening
+  const stopListening = async () => {
+    try {
+      await SpeechRecognition.stop()
+    } catch (e) {
+      console.log('Stop error:', e)
+    }
+    setIsListening(false)
+  }
+
+  // Toggle voice
   const toggleListening = () => {
     if (isListening) {
-      recognitionRef.current?.stop()
-      setIsListening(false)
-      return
-    }
-
-    // Check for speech recognition support
-    const SpeechRecognitionAPI = (window as any).SpeechRecognition || 
-                                  (window as any).webkitSpeechRecognition ||
-                                  (window as any).mozSpeechRecognition ||
-                                  (window as any).msSpeechRecognition
-
-    if (!SpeechRecognitionAPI) {
-      alert('Voice input is not supported on this device. Please use a modern browser or Chrome.')
-      return
-    }
-
-    try {
-      recognitionRef.current = new SpeechRecognitionAPI()
-      recognitionRef.current.continuous = true // Keep listening
-      recognitionRef.current.interimResults = true // Show partial results
-      recognitionRef.current.lang = voiceLanguage
-      recognitionRef.current.maxAlternatives = 3 // Get multiple alternatives
-
-      let fullTranscript = ''
-
-      recognitionRef.current.onstart = () => {
-        console.log('Voice recognition started')
-        setIsListening(true)
-        setTranscript('')
-        fullTranscript = ''
-      }
-
-      recognitionRef.current.onresult = (event: any) => {
-        let interimTranscript = ''
-        let finalTranscript = ''
-
-        for (let i = event.resultIndex; i < event.results.length; i++) {
-          const transcript = event.results[i][0].transcript
-          if (event.results[i].isFinal) {
-            finalTranscript += transcript + ' '
-          } else {
-            interimTranscript += transcript
-          }
-        }
-
-        // Update display
-        if (finalTranscript) {
-          fullTranscript += finalTranscript
-          setTranscript(fullTranscript.trim())
-          // Process the final transcript
-          handleVoiceCommand(fullTranscript.trim())
-        } else if (interimTranscript) {
-          setTranscript(fullTranscript + interimTranscript)
-        }
-      }
-
-      recognitionRef.current.onerror = (event: any) => {
-        console.error('Speech recognition error:', event.error)
-        setIsListening(false)
-        if (event.error === 'no-speech') {
-          speak(voiceLanguage === 'hi-IN' ? 'कुछ सुनाई नहीं दिया, फिर से बोलें' : 'No speech detected, try again', voiceLanguage)
-        } else if (event.error === 'not-allowed') {
-          alert('Microphone permission denied. Please allow microphone access.')
-        }
-      }
-
-      recognitionRef.current.onend = () => {
-        console.log('Voice recognition ended')
-        setIsListening(false)
-      }
-
-      recognitionRef.current.start()
-      
-      // Give audio feedback
-      speak(voiceLanguage === 'hi-IN' 
-        ? 'बोलिए - फसल का नाम, कितने एकड़, और गांव का नाम' 
-        : voiceLanguage === 'bn-IN'
-        ? 'বলুন - ফসলের নাম, কত বিঘা, এবং গ্রামের নাম'
-        : 'Speak - crop name, how many acres, and village name', voiceLanguage)
-        
-    } catch (error) {
-      console.error('Failed to start voice recognition:', error)
-      alert('Failed to start voice input. Please try again.')
+      stopListening()
+    } else {
+      startListening()
     }
   }
 
@@ -344,19 +441,20 @@ export default function BookMachinePage() {
       {/* Voice Input Section */}
       <div className="voice-section">
         <div className="voice-instructions">
-          <p>🎤 {voiceLanguage === 'hi-IN' ? 'बोलें:' : voiceLanguage === 'bn-IN' ? 'বলুন:' : 'Say:'}</p>
+          <p className="voice-title">🎤 {voiceLanguage === 'hi-IN' ? 'आवाज से भरें:' : voiceLanguage === 'bn-IN' ? 'কণ্ঠে পূরণ করুন:' : 'Fill by Voice:'}</p>
           <p className="example-text">
             {voiceLanguage === 'hi-IN' 
-              ? '"मुझे गेहूं के लिए 5 एकड़ जमीन जोतनी है, गांव रामपुर"'
+              ? '"मेरा नाम राम है, गेहूं, 5 एकड़, गांव रामपुर"'
               : voiceLanguage === 'bn-IN'
-              ? '"আমার ধানের জন্য ৫ বিঘা জমি চাষ করতে হবে, গ্রাম রামপুর"'
-              : '"I need to harvest wheat on 5 acres in village Rampur"'}
+              ? '"আমার নাম রাম, ধান, ৫ বিঘা, গ্রাম রামপুর"'
+              : '"My name is Ram, Wheat, 5 acres, village Rampur"'}
           </p>
         </div>
         
         <button 
           className={`voice-btn ${isListening ? 'listening' : ''} ${isSpeaking ? 'speaking' : ''}`}
           onClick={toggleListening}
+          disabled={!voiceSupported}
         >
           {isListening ? (
             <>
@@ -369,10 +467,19 @@ export default function BookMachinePage() {
         </button>
         
         <p className="voice-status">
-          {isListening 
-            ? (voiceLanguage === 'hi-IN' ? '🔴 सुन रहा हूं...' : voiceLanguage === 'bn-IN' ? '🔴 শুনছি...' : '🔴 Listening...')
-            : (voiceLanguage === 'hi-IN' ? 'बोलने के लिए टैप करें' : voiceLanguage === 'bn-IN' ? 'কথা বলতে ট্যাপ করুন' : 'Tap to speak')}
+          {!voiceSupported 
+            ? '❌ Voice not supported'
+            : isListening 
+            ? (voiceLanguage === 'hi-IN' ? '🔴 सुन रहा हूं... बोलें!' : '🔴 Listening... Speak now!')
+            : (voiceLanguage === 'hi-IN' ? 'माइक दबाएं और बोलें' : 'Tap mic and speak')}
         </p>
+        
+        {voiceError && (
+          <div className="voice-error">
+            <AlertCircle size={16} />
+            <span>{voiceError}</span>
+          </div>
+        )}
         
         {transcript && (
           <div className="transcript">
@@ -389,7 +496,7 @@ export default function BookMachinePage() {
           onClick={() => setShowCropGuide(!showCropGuide)}
         >
           <Leaf size={20} />
-          <span>{selectedCrop ? `${selectedCrop.icon} ${selectedCrop.names.en}` : 'Select Crop'}</span>
+          <span>{selectedCrop ? `${selectedCrop.icon} ${selectedCrop.names.en}` : 'Select Crop / फसल चुनें'}</span>
           {showCropGuide ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
         </button>
 
@@ -431,7 +538,7 @@ export default function BookMachinePage() {
       {/* Booking Form */}
       <form className="book-form" onSubmit={handleSubmit}>
         <div className="form-group">
-          <label>Machine</label>
+          <label>Machine / मशीन</label>
           <select 
             value={selectedMachine} 
             onChange={(e) => setSelectedMachine(e.target.value)}
@@ -447,7 +554,7 @@ export default function BookMachinePage() {
         </div>
 
         <div className="form-group">
-          <label>Your Name</label>
+          <label>Your Name / आपका नाम</label>
           <input
             type="text"
             value={farmerName}
@@ -458,7 +565,7 @@ export default function BookMachinePage() {
         </div>
 
         <div className="form-group">
-          <label>Phone Number</label>
+          <label>Phone Number / फोन नंबर</label>
           <input
             type="tel"
             value={farmerPhone}
@@ -468,7 +575,7 @@ export default function BookMachinePage() {
         </div>
 
         <div className="form-group">
-          <label>Land Area (Acres)</label>
+          <label>Land Area (Acres) / जमीन (एकड़)</label>
           <input
             type="number"
             value={acres}
@@ -481,7 +588,7 @@ export default function BookMachinePage() {
         </div>
 
         <div className="form-group">
-          <label>Village/Location</label>
+          <label>Village/Location / गांव</label>
           <input
             type="text"
             value={location}
@@ -492,7 +599,7 @@ export default function BookMachinePage() {
         </div>
 
         <button type="submit" className="submit-btn" disabled={loading}>
-          {loading ? 'Booking...' : 'Confirm Booking'}
+          {loading ? 'Booking...' : 'Confirm Booking / बुकिंग करें'}
         </button>
       </form>
     </div>
