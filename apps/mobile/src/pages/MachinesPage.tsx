@@ -1,6 +1,7 @@
-import { useState, useMemo } from 'react'
+import { useState } from 'react'
 import { Search } from 'lucide-react'
 import { useSocket } from '../context/SocketContext'
+import { useLanguage } from '../context/LanguageContext'
 import MachineCard from '../components/MachineCard'
 import './MachinesPage.css'
 
@@ -8,33 +9,42 @@ type FilterState = 'all' | 'active' | 'idle' | 'off'
 
 export default function MachinesPage() {
   const { machines, connected } = useSocket()
+  const { t } = useLanguage()
   const [search, setSearch] = useState('')
   const [filter, setFilter] = useState<FilterState>('all')
 
-  const filteredMachines = useMemo(() => {
-    return Array.from(machines.values()).filter(machine => {
-      // Filter by state
-      if (filter !== 'all' && machine.state !== filter) return false
-      
-      // Filter by search
-      if (search) {
-        const searchLower = search.toLowerCase()
-        return (
-          machine.id.toLowerCase().includes(searchLower) ||
-          machine.type.toLowerCase().includes(searchLower)
-        )
-      }
-      
-      return true
-    })
-  }, [machines, filter, search])
+  const allMachines = Array.from(machines.values())
 
-  const stats = useMemo(() => ({
-    all: machines.size,
-    active: Array.from(machines.values()).filter(m => m.state === 'active').length,
-    idle: Array.from(machines.values()).filter(m => m.state === 'idle').length,
-    off: Array.from(machines.values()).filter(m => m.state === 'off').length,
-  }), [machines])
+  const stats = {
+    all: allMachines.length,
+    active: allMachines.filter(m => m.state === 'active').length,
+    idle: allMachines.filter(m => m.state === 'idle').length,
+    off: allMachines.filter(m => m.state === 'off').length,
+  }
+
+  let filteredList = allMachines
+
+  if (filter !== 'all') {
+    filteredList = filteredList.filter(machine => machine.state === filter)
+  }
+
+  if (search.trim()) {
+    const searchLower = search.toLowerCase()
+    filteredList = filteredList.filter(machine => 
+      machine.id.toLowerCase().includes(searchLower) ||
+      (machine.type && machine.type.toLowerCase().includes(searchLower))
+    )
+  }
+
+  const getFilterLabel = (filterType: FilterState) => {
+    switch (filterType) {
+      case 'all': return t('all')
+      case 'active': return t('active')
+      case 'idle': return t('available')
+      case 'off': return t('offline')
+      default: return filterType
+    }
+  }
 
   return (
     <div className="machines-page">
@@ -43,7 +53,7 @@ export default function MachinesPage() {
         <Search size={20} className="search-icon" />
         <input
           type="text"
-          placeholder="Search machines..."
+          placeholder={t('searchMachines')}
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           className="search-input"
@@ -56,44 +66,44 @@ export default function MachinesPage() {
           className={`filter-tab ${filter === 'all' ? 'active' : ''}`}
           onClick={() => setFilter('all')}
         >
-          All ({stats.all})
+          {getFilterLabel('all')} ({stats.all})
         </button>
         <button
           className={`filter-tab ${filter === 'active' ? 'active' : ''}`}
           onClick={() => setFilter('active')}
         >
-          Active ({stats.active})
+          {getFilterLabel('active')} ({stats.active})
         </button>
         <button
           className={`filter-tab ${filter === 'idle' ? 'active' : ''}`}
           onClick={() => setFilter('idle')}
         >
-          Available ({stats.idle})
+          {getFilterLabel('idle')} ({stats.idle})
         </button>
         <button
           className={`filter-tab ${filter === 'off' ? 'active' : ''}`}
           onClick={() => setFilter('off')}
         >
-          Offline ({stats.off})
+          {getFilterLabel('off')} ({stats.off})
         </button>
       </div>
 
       {/* Machine List */}
-      <div className="machine-list">
+      <div className="machine-list" key={`${filter}-${search}-${filteredList.length}`}>
         {!connected ? (
           <div className="loading-container">
             <div className="spinner"></div>
-            <p>Connecting to server...</p>
+            <p>{t('connectingServer')}</p>
           </div>
-        ) : filteredMachines.length === 0 ? (
+        ) : filteredList.length === 0 ? (
           <div className="empty-state">
             <div className="empty-state-icon">🚜</div>
-            <h3>No machines found</h3>
-            <p>Try adjusting your search or filters</p>
+            <h3>{t('noMachinesFound')}</h3>
+            <p>{t('adjustFilters')}</p>
           </div>
         ) : (
-          filteredMachines.map(machine => (
-            <MachineCard key={machine.id} machine={machine} />
+          filteredList.map(machine => (
+            <MachineCard key={`${machine.id}-${filter}`} machine={machine} />
           ))
         )}
       </div>

@@ -1,607 +1,835 @@
 import { useState, useEffect } from 'react'
-import { useNavigate, useSearchParams } from 'react-router-dom'
-import { ArrowLeft, Mic, MicOff, Volume2, ChevronDown, ChevronUp, Search, Leaf, AlertCircle } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
+import { ArrowLeft, Mic, MapPin, Check, Edit2, CheckCircle, Download, Share2, Home, MessageCircle, FileText, ThumbsUp, ThumbsDown } from 'lucide-react'
+import { TextToSpeech } from '@capacitor-community/text-to-speech'
 import { SpeechRecognition } from '@capacitor-community/speech-recognition'
 import { useAuth } from '../context/AuthContext'
 import { useSocket } from '../context/SocketContext'
+import { useLanguage } from '../context/LanguageContext'
 import { createBooking } from '../lib/api'
-import cropMachinesData from '../data/crop-machines.json'
 import './BookMachinePage.css'
 
-interface CropData {
+type SpeechLanguage = 'hi-IN' | 'en-IN' | 'bn-IN'
+type Step = 'crop' | 'acres' | 'schedule' | 'confirm' | 'receipt' | 'feedback'
+
+interface BookingReceipt {
   id: string
-  names: { en: string; hi: string; pa: string }
-  aliases: string[]
-  season: string
-  machines: string[]
+  farmer_name: string
+  farmer_phone: string
+  machine_id: string
+  crop: string
+  acres: number
+  location: string
+  status: string
+  created_at: string
+  scheduled_date: string
+  scheduled_time: string
+}
+
+interface Crop {
+  id: string
+  en: string
+  hi: string
+  bn: string
   icon: string
-  description: { en: string; hi: string }
+  keywords: string[]
 }
 
-// Build crop lookup for voice recognition
-const buildCropLookup = () => {
-  const lookup: { [key: string]: CropData } = {}
-  cropMachinesData.crops.forEach((crop: CropData) => {
-    lookup[crop.names.en.toLowerCase()] = crop
-    lookup[crop.names.hi] = crop
-    lookup[crop.names.pa] = crop
-    crop.aliases.forEach(alias => {
-      lookup[alias.toLowerCase()] = crop
-    })
-  })
-  return lookup
+const CROPS: Crop[] = [
+  { id: 'rice', en: 'Rice', hi: 'धान', bn: 'ধান', icon: '🌾', keywords: ['rice', 'dhan', 'chawal', 'धान', 'धन', 'ধান'] },
+  { id: 'maize', en: 'Maize', hi: 'मक्का', bn: 'ভুট্টা', icon: '🌽', keywords: ['maize', 'corn', 'makka', 'bhutta', 'butta', 'मक्का', 'ভুট্টা'] },
+  { id: 'sugarcane', en: 'Sugarcane', hi: 'गन्ना', bn: 'আখ', icon: '🎋', keywords: ['sugarcane', 'ganna', 'aakh', 'गन्ना', 'আখ'] },
+  { id: 'cotton', en: 'Cotton', hi: 'कपास', bn: 'তুলা', icon: '☁️', keywords: ['cotton', 'kapas', 'tula', 'कपास', 'তুলা'] },
+]
+
+const TRANSLATIONS = {
+  'hi-IN': {
+    booking: 'मशीन बुक करें',
+    chooseCrop: 'अपनी फसल चुनें',
+    askAcres: 'कितने एकड़ जमीन है?',
+    askLocation: 'गांव का नाम बोलें',
+    confirmBooking: 'बुकिंग पुष्टि',
+    crop: 'फसल चुनें',
+    area: 'जमीन (एकड़)',
+    location: 'स्थान',
+    machine: 'मशीन',
+    confirm: 'बुकिंग करें',
+    success: 'बुकिंग सफल!',
+    acres: 'एकड़',
+    name: 'नाम',
+    phone: 'फोन',
+    next: 'आगे',
+    schedule: 'तारीख और समय चुनें',
+    selectDate: 'तारीख चुनें',
+    selectTime: 'समय चुनें',
+    arrivalDate: 'मशीन आगमन तारीख',
+    arrivalTime: 'मशीन आगमन समय',
+  },
+  'en-IN': {
+    booking: 'Book Machine',
+    chooseCrop: 'Select your crop',
+    askAcres: 'How many acres?',
+    askLocation: 'Say village name',
+    confirmBooking: 'Confirm Booking',
+    crop: 'Select Crop',
+    area: 'Land (acres)',
+    location: 'Location',
+    machine: 'Machine',
+    confirm: 'Book Now',
+    success: 'Booking successful!',
+    acres: 'acres',
+    name: 'Name',
+    phone: 'Phone',
+    next: 'Next',
+    schedule: 'Select Date & Time',
+    selectDate: 'Select Date',
+    selectTime: 'Select Time',
+    arrivalDate: 'Machine Arrival Date',
+    arrivalTime: 'Machine Arrival Time',
+  },
+  'bn-IN': {
+    booking: 'মেশিন বুক',
+    chooseCrop: 'ফসল নির্বাচন করুন',
+    askAcres: 'কত বিঘা জমি?',
+    askLocation: 'গ্রামের নাম বলুন',
+    confirmBooking: 'বুকিং নিশ্চিত',
+    crop: 'ফসল নির্বাচন',
+    area: 'জমি (বিঘা)',
+    location: 'অবস্থান',
+    machine: 'মেশিন',
+    confirm: 'বুক করুন',
+    success: 'বুকিং সফল!',
+    acres: 'বিঘা',
+    name: 'নাম',
+    phone: 'ফোন',
+    next: 'পরবর্তী',
+    schedule: 'তারিখ ও সময় নির্বাচন করুন',
+    selectDate: 'তারিখ নির্বাচন করুন',
+    selectTime: 'সময় নির্বাচন করুন',
+    arrivalDate: 'মেশিন আগমনের তারিখ',
+    arrivalTime: 'মেশিন আগমনের সময়',
+  }
 }
 
-const CROP_LOOKUP = buildCropLookup()
-
-// Number words for parsing
-const NUMBER_WORDS: { [key: string]: number } = {
+const NUMBER_WORDS: Record<string, number> = {
+  // English
   'one': 1, 'two': 2, 'three': 3, 'four': 4, 'five': 5,
   'six': 6, 'seven': 7, 'eight': 8, 'nine': 9, 'ten': 10,
-  'fifteen': 15, 'twenty': 20, 'twenty five': 25, 'thirty': 30,
+  'eleven': 11, 'twelve': 12, 'fifteen': 15, 'twenty': 20,
+  // Hindi (Devanagari)
   'एक': 1, 'दो': 2, 'तीन': 3, 'चार': 4, 'पांच': 5, 'पाँच': 5,
-  'छह': 6, 'सात': 7, 'आठ': 8, 'नौ': 9, 'दस': 10,
-  'पंद्रह': 15, 'बीस': 20, 'पच्चीस': 25, 'तीस': 30,
-  'আধা': 0.5, 'এক': 1, 'দুই': 2, 'তিন': 3, 'চার': 4, 'পাঁচ': 5,
+  'छह': 6, 'छः': 6, 'सात': 7, 'आठ': 8, 'नौ': 9, 'दस': 10,
+  'ग्यारह': 11, 'बारह': 12, 'पंद्रह': 15, 'बीस': 20,
+  // Hindi (Romanized)
+  'ek': 1, 'do': 2, 'teen': 3, 'char': 4, 'paanch': 5, 'panch': 5,
+  'chhe': 6, 'saat': 7, 'aath': 8, 'nau': 9, 'das': 10,
+  // Bengali (Bengali script)
+  'এক': 1, 'দুই': 2, 'তিন': 3, 'চার': 4, 'পাঁচ': 5,
   'ছয়': 6, 'সাত': 7, 'আট': 8, 'নয়': 9, 'দশ': 10,
-  'পনের': 15, 'কুড়ি': 20, 'পঁচিশ': 25, 'ত্রিশ': 30,
+  'এগারো': 11, 'বারো': 12, 'পনেরো': 15, 'কুড়ি': 20,
+  // Bengali (Romanized)
+  'dui': 2, 'tin': 3, 'pach': 5,
 }
 
 export default function BookMachinePage() {
   const navigate = useNavigate()
-  const [searchParams] = useSearchParams()
   const { user } = useAuth()
   const { machines } = useSocket()
+  const { language: appLanguage, setLanguage: setAppLanguage } = useLanguage()
 
-  const [selectedMachine, setSelectedMachine] = useState(searchParams.get('machine') || '')
-  const [farmerName, setFarmerName] = useState(user?.name || '')
-  const [farmerPhone, setFarmerPhone] = useState(user?.phone || '')
-  const [acres, setAcres] = useState('')
-  const [location, setLocation] = useState(user?.village || '')
-  const [cropType, setCropType] = useState('')
-  const [selectedCrop, setSelectedCrop] = useState<CropData | null>(null)
-  const [isListening, setIsListening] = useState(false)
-  const [transcript, setTranscript] = useState('')
-  const [loading, setLoading] = useState(false)
-  const [showCropGuide, setShowCropGuide] = useState(false)
-  const [cropSearchTerm, setCropSearchTerm] = useState('')
-  const [voiceLanguage, setVoiceLanguage] = useState<'hi-IN' | 'en-IN' | 'bn-IN'>('hi-IN')
-  const [isSpeaking, setIsSpeaking] = useState(false)
-  const [voiceError, setVoiceError] = useState('')
-  const [voiceSupported, setVoiceSupported] = useState(true)
-
-  // Check permissions on mount
-  useEffect(() => {
-    checkPermissions()
-  }, [])
-
-  const checkPermissions = async () => {
-    try {
-      const { speechRecognition } = await SpeechRecognition.checkPermissions()
-      if (speechRecognition === 'denied') {
-        setVoiceError('Microphone permission denied')
-        setVoiceSupported(false)
-      }
-    } catch (error) {
-      console.log('Permission check error:', error)
-    }
-  }
-
-  // Filter crops based on search
-  const filteredCrops = cropMachinesData.crops.filter((crop: CropData) => {
-    const search = cropSearchTerm.toLowerCase()
-    return (
-      crop.names.en.toLowerCase().includes(search) ||
-      crop.names.hi.includes(cropSearchTerm) ||
-      crop.aliases.some(alias => alias.toLowerCase().includes(search))
-    )
-  })
-
-  // Get available machines from socket
-  const availableMachines = Array.from(machines.values()).filter(m => 
-    m.state === 'idle' || m.state === 'active'
-  )
-
-  // Auto-select machine based on crop
-  const autoSelectMachineForCrop = (crop: CropData) => {
-    if (availableMachines.length === 0) return
-    
-    for (const recommendedMachine of crop.machines) {
-      const matched = availableMachines.find(m => 
-        m.id.toLowerCase().includes(recommendedMachine.toLowerCase()) ||
-        m.type?.toLowerCase().includes(recommendedMachine.toLowerCase())
-      )
-      if (matched) {
-        setSelectedMachine(matched.id)
-        return
-      }
-    }
-    if (availableMachines[0]) {
-      setSelectedMachine(availableMachines[0].id)
-    }
-  }
-
-  // Text-to-Speech
-  const speak = (text: string, lang: string = 'hi-IN') => {
-    if ('speechSynthesis' in window) {
-      window.speechSynthesis.cancel()
-      const utterance = new SpeechSynthesisUtterance(text)
-      utterance.lang = lang
-      utterance.rate = 0.9
-      utterance.onstart = () => setIsSpeaking(true)
-      utterance.onend = () => setIsSpeaking(false)
-      window.speechSynthesis.speak(utterance)
-    }
-  }
-
-  // Detect language from text
-  const detectLanguage = (text: string): 'hi-IN' | 'en-IN' | 'bn-IN' => {
-    if (/[\u0980-\u09FF]/.test(text)) return 'bn-IN'
-    if (/[\u0900-\u097F]/.test(text)) return 'hi-IN'
+  // Map app language to speech language
+  const getSpeechLang = (): SpeechLanguage => {
+    if (appLanguage === 'hi') return 'hi-IN'
+    if (appLanguage === 'bn') return 'bn-IN'
     return 'en-IN'
   }
+  
+  const [speechLang, setSpeechLang] = useState<SpeechLanguage>(getSpeechLang())
+  const [step, setStep] = useState<Step>('crop')
+  const [isListening, setIsListening] = useState(false)
+  const [isSpeaking, setIsSpeaking] = useState(false)
+  const [selectedCrop, setSelectedCrop] = useState<Crop | null>(null)
+  const [acres, setAcres] = useState('')
+  const [location, setLocation] = useState(user?.village || 'My Village')
+  const [assignedMachine, setAssignedMachine] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [transcript, setTranscript] = useState('')
+  const [bookingReceipt, setBookingReceipt] = useState<BookingReceipt | null>(null)
+  const [scheduledDate, setScheduledDate] = useState('')
+  const [scheduledTime, setScheduledTime] = useState('')
 
-  // Find crop from voice input
-  const findCropFromVoice = (text: string): CropData | null => {
-    const lowerText = text.toLowerCase()
-    
-    // Check each word
-    const words = text.split(/\s+/)
-    for (const word of words) {
-      const cleanWord = word.replace(/[।.,!?]/g, '')
-      const crop = CROP_LOOKUP[cleanWord.toLowerCase()] || CROP_LOOKUP[cleanWord]
-      if (crop) return crop
-    }
-    
-    // Check partial matches
-    for (const [key, crop] of Object.entries(CROP_LOOKUP)) {
-      if (lowerText.includes(key.toLowerCase()) || text.includes(key)) {
-        return crop
-      }
-    }
-    return null
-  }
+  const t = TRANSLATIONS[speechLang]
+  
+  // Sync speech language with app language
+  useEffect(() => {
+    setSpeechLang(getSpeechLang())
+  }, [appLanguage])
 
-  // Extract acres from text
-  const extractAcres = (text: string): number | null => {
-    // Pattern for numbers followed by acre keywords
-    const patterns = [
-      /(\d+(?:\.\d+)?)\s*(?:acre|acres|एकड़|बीघा|একর|বিঘা|বিঘে)/i,
-      /(?:acre|acres|एकड़|बीघा|একর|বিঘা)\s*(?:is|है|আছে)?\s*(\d+(?:\.\d+)?)/i,
-      /(\d+(?:\.\d+)?)\s*(?:land|जमीन|জমি)/i,
-    ]
-    
-    for (const pattern of patterns) {
-      const match = text.match(pattern)
-      if (match) {
-        const num = parseFloat(match[1] || match[2])
-        if (!isNaN(num) && num > 0 && num < 10000) return num
-      }
-    }
-    
-    // Check for number words
-    for (const [word, value] of Object.entries(NUMBER_WORDS)) {
-      if (text.toLowerCase().includes(word) || text.includes(word)) {
-        return value
-      }
-    }
-    
-    // Try to find any number
-    const numMatch = text.match(/(\d+)/)
-    if (numMatch) {
-      const num = parseInt(numMatch[1])
-      if (num > 0 && num < 1000) return num
-    }
-    
-    return null
-  }
+  useEffect(() => {
+    requestPermissions()
+    if (user?.village) setLocation(user.village)
+  }, [user])
 
-  // Extract location from text
-  const extractLocation = (text: string): string | null => {
-    const patterns = [
-      /(?:village|from|at|location|गांव|गाँव|से|में|গ্রাম|থেকে)\s+(?:is\s+)?([a-zA-Z\u0900-\u097F\u0980-\u09FF]+)/i,
-    ]
-    
-    for (const pattern of patterns) {
-      const match = text.match(pattern)
-      if (match && match[1]) {
-        const loc = match[1].trim()
-        if (loc.length > 1 && !/^\d+$/.test(loc)) {
-          return loc.charAt(0).toUpperCase() + loc.slice(1)
-        }
-      }
-    }
-    return null
-  }
-
-  // Extract name from text
-  const extractName = (text: string): string | null => {
-    const patterns = [
-      /(?:my name is|i am|name is|मेरा नाम|नाम|আমার নাম)\s+([a-zA-Z\u0900-\u097F\u0980-\u09FF]+(?:\s+[a-zA-Z\u0900-\u097F\u0980-\u09FF]+)?)/i,
-    ]
-    
-    for (const pattern of patterns) {
-      const match = text.match(pattern)
-      if (match && match[1]) {
-        const name = match[1].trim()
-        if (name.length > 1) {
-          return name.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')
-        }
-      }
-    }
-    return null
-  }
-
-  // Extract phone from text
-  const extractPhone = (text: string): string | null => {
-    const cleanText = text.replace(/[\s-]/g, '')
-    const phoneMatch = cleanText.match(/(\d{10})/)
-    if (phoneMatch) return phoneMatch[1]
-    
-    const digits = text.match(/\d/g)
-    if (digits && digits.length >= 10) {
-      return digits.slice(0, 10).join('')
-    }
-    return null
-  }
-
-  // Handle voice command - process the transcript
-  const handleVoiceCommand = (command: string) => {
-    console.log('Processing voice command:', command)
-    setVoiceError('')
-    
-    const detectedLang = detectLanguage(command)
-    let filledFields: string[] = []
-    
-    // Extract crop
-    const crop = findCropFromVoice(command)
-    if (crop) {
-      setCropType(crop.id)
-      setSelectedCrop(crop)
-      autoSelectMachineForCrop(crop)
-      filledFields.push('फसल/Crop')
-    }
-    
-    // Extract name
-    const name = extractName(command)
-    if (name && !farmerName) {
-      setFarmerName(name)
-      filledFields.push('नाम/Name')
-    }
-    
-    // Extract phone
-    const phone = extractPhone(command)
-    if (phone && !farmerPhone) {
-      setFarmerPhone(phone)
-      filledFields.push('फोन/Phone')
-    }
-    
-    // Extract acres
-    const acresVal = extractAcres(command)
-    if (acresVal) {
-      setAcres(acresVal.toString())
-      filledFields.push('एकड़/Acres')
-    }
-    
-    // Extract location
-    const loc = extractLocation(command)
-    if (loc) {
-      setLocation(loc)
-      filledFields.push('गांव/Location')
-    }
-    
-    // Provide feedback
-    if (filledFields.length > 0) {
-      const feedback = detectedLang === 'hi-IN' 
-        ? `${filledFields.length} जानकारी भरी गई: ${filledFields.join(', ')}`
-        : detectedLang === 'bn-IN'
-        ? `${filledFields.length}টি তথ্য পূরণ হয়েছে`
-        : `Filled ${filledFields.length} fields: ${filledFields.join(', ')}`
-      speak(feedback, detectedLang)
-    } else {
-      const msg = detectedLang === 'hi-IN' 
-        ? 'कुछ समझ नहीं आया। कृपया फसल का नाम, एकड़ और गांव बोलें।' 
-        : detectedLang === 'bn-IN'
-        ? 'বুঝতে পারিনি। অনুগ্রহ করে ফসলের নাম, বিঘা এবং গ্রাম বলুন।'
-        : 'Could not understand. Please say crop name, acres and village.'
-      speak(msg, detectedLang)
-    }
-  }
-
-  // Start native speech recognition
-  const startListening = async () => {
-    setVoiceError('')
-    setTranscript('')
-    
+  const requestPermissions = async () => {
     try {
-      // Request permission first
-      const permResult = await SpeechRecognition.requestPermissions()
-      if (permResult.speechRecognition !== 'granted') {
-        setVoiceError('Microphone permission denied. Please allow in settings.')
-        return
-      }
+      await SpeechRecognition.requestPermissions()
+    } catch (e) {
+      console.log('Permission error:', e)
+    }
+  }
 
-      // Check if available
+  const speak = async (text: string) => {
+    setIsSpeaking(true)
+    try {
+      await TextToSpeech.speak({ text, lang: speechLang, rate: 0.9, volume: 1.0 })
+    } catch (e) {
+      console.log('TTS error:', e)
+    }
+    setIsSpeaking(false)
+  }
+
+  const listen = async (): Promise<string> => {
+    setIsListening(true)
+    setTranscript('')
+    try {
       const available = await SpeechRecognition.available()
       if (!available.available) {
-        setVoiceError('Speech recognition not available on this device')
-        return
+        setIsListening(false)
+        return ''
       }
-
-      setIsListening(true)
-      
-      // Speak instruction
-      speak(
-        voiceLanguage === 'hi-IN' 
-          ? 'बोलिए - फसल का नाम, कितने एकड़, और गांव का नाम' 
-          : voiceLanguage === 'bn-IN'
-          ? 'বলুন - ফসলের নাম, কত বিঘা, এবং গ্রামের নাম'
-          : 'Say - crop name, how many acres, and village name',
-        voiceLanguage
-      )
-
-      // Start listening with native plugin
       const result = await SpeechRecognition.start({
-        language: voiceLanguage,
-        maxResults: 5,
-        prompt: voiceLanguage === 'hi-IN' ? 'बोलिए...' : 'Speak now...',
-        partialResults: true,
-        popup: true, // Show native popup on Android
+        language: speechLang,
+        maxResults: 3,
+        popup: true,
+        partialResults: false
       })
-
-      console.log('Speech result:', result)
-      
-      if (result.matches && result.matches.length > 0) {
-        const bestMatch = result.matches[0]
-        setTranscript(bestMatch)
-        handleVoiceCommand(bestMatch)
-      } else {
-        setVoiceError('No speech detected. Please try again.')
-      }
-      
-    } catch (error: any) {
-      console.error('Speech recognition error:', error)
-      if (error.message?.includes('permission')) {
-        setVoiceError('Microphone permission denied')
-      } else if (error.message?.includes('No match')) {
-        setVoiceError('Could not understand. Please try again.')
-      } else {
-        setVoiceError('Voice error: ' + (error.message || 'Unknown error'))
-      }
-    } finally {
       setIsListening(false)
-    }
-  }
-
-  // Stop listening
-  const stopListening = async () => {
-    try {
-      await SpeechRecognition.stop()
+      if (result.matches && result.matches.length > 0) {
+        const text = result.matches[0]
+        setTranscript(text)
+        return text
+      }
+      return ''
     } catch (e) {
-      console.log('Stop error:', e)
-    }
-    setIsListening(false)
-  }
-
-  // Toggle voice
-  const toggleListening = () => {
-    if (isListening) {
-      stopListening()
-    } else {
-      startListening()
+      console.log('Speech error:', e)
+      setIsListening(false)
+      return ''
     }
   }
 
-  // Handle form submit
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!selectedMachine || !farmerName || !acres || !location) {
-      alert('Please fill all required fields')
-      return
+  const parseNumber = (text: string): number | null => {
+    const lower = text.toLowerCase().trim()
+    // Check for Hindi/Bengali/English number words
+    for (const [word, num] of Object.entries(NUMBER_WORDS)) {
+      if (text.includes(word) || lower.includes(word.toLowerCase())) {
+        console.log('Parsed number:', word, '=', num)
+        return num
+      }
     }
+    // Check for digits
+    const match = text.match(/\d+/)
+    if (match) return parseInt(match[0])
+    return null
+  }
 
+  const findCrop = (text: string): Crop | null => {
+    const lower = text.toLowerCase().trim()
+    for (const crop of CROPS) {
+      // Check exact match with Hindi/Bengali names
+      if (text.includes(crop.hi) || text.includes(crop.bn)) {
+        return crop
+      }
+      // Check keywords
+      for (const keyword of crop.keywords) {
+        if (lower.includes(keyword.toLowerCase()) || text.includes(keyword)) {
+          return crop
+        }
+      }
+    }
+    return null
+  }
+
+  const assignMachine = () => {
+    const available = Array.from(machines.values()).filter(m => m.state === 'idle')
+    const machine = available[0] || Array.from(machines.values())[0]
+    const id = machine?.id || 'sim_001'
+    setAssignedMachine(id)
+    return id
+  }
+
+  const handleCropVoice = async () => {
+    await speak(t.chooseCrop)
+    const text = await listen()
+    if (text) {
+      const crop = findCrop(text)
+      if (crop) {
+        setSelectedCrop(crop)
+        assignMachine()
+        // Auto show next button is handled by state, user taps Next to proceed
+      }
+    }
+  }
+
+  const selectCropAndNext = (crop: Crop) => {
+    setSelectedCrop(crop)
+    assignMachine()
+    setStep('acres')
+  }
+
+  const goToAcres = () => {
+    if (selectedCrop) {
+      setStep('acres')
+    }
+  }
+
+  const handleAcresVoice = async () => {
+    await speak(t.askAcres)
+    const text = await listen()
+    console.log('Acres voice input:', text)
+    if (text) {
+      const num = parseNumber(text)
+      console.log('Parsed acres:', num)
+      if (num) {
+        setAcres(num.toString())
+      } else {
+        // If can't parse, try to use the raw text if it looks like a number
+        const cleaned = text.replace(/[^\d]/g, '')
+        if (cleaned) {
+          setAcres(cleaned)
+        }
+      }
+    }
+  }
+
+  const handleLocationVoice = async () => {
+    await speak(t.askLocation)
+    const text = await listen()
+    if (text) setLocation(text)
+  }
+
+  const handleConfirm = async () => {
+    if (!selectedCrop || !acres || !location) return
     setLoading(true)
+    
+    const bookingData = {
+      machine_id: assignedMachine || 'sim_001',
+      farmer_id: user?.id || 'guest',
+      farmer_name: user?.name || 'Farmer',
+      farmer_phone: user?.phone || '',
+      scheduled_date: scheduledDate,
+      scheduled_time: scheduledTime,
+      acres: parseFloat(acres),
+      location,
+      notes: 'Crop: ' + selectedCrop.en
+    }
+    
     try {
-      await createBooking({
-        machine_id: selectedMachine,
-        farmer_id: user?.id || 'guest',
-        farmer_name: farmerName,
-        farmer_phone: farmerPhone,
-        scheduled_date: new Date().toISOString(),
+      const result = await createBooking(bookingData)
+      
+      // Create receipt from response
+      const receipt: BookingReceipt = {
+        id: result.id || (result as { booking?: { id: string } }).booking?.id || `BK${Date.now()}`,
+        farmer_name: user?.name || 'Farmer',
+        farmer_phone: user?.phone || '',
+        machine_id: assignedMachine || 'sim_001',
+        crop: selectedCrop.en,
         acres: parseFloat(acres),
-        location: location,
-        notes: cropType ? `Crop: ${cropType}` : ''
-      })
-      speak(voiceLanguage === 'hi-IN' ? 'बुकिंग सफल!' : 'Booking successful!', voiceLanguage)
-      navigate('/bookings')
-    } catch (err: any) {
-      alert(err.message || 'Booking failed')
+        location,
+        status: 'pending',
+        created_at: new Date().toISOString(),
+        scheduled_date: scheduledDate,
+        scheduled_time: scheduledTime
+      }
+      
+      setBookingReceipt(receipt)
+      await speak(t.success)
+      setStep('receipt')
+    } catch (e: unknown) {
+      // If API fails, create offline booking
+      const offlineReceipt: BookingReceipt = {
+        id: `offline_${Date.now()}`,
+        farmer_name: user?.name || 'Farmer',
+        farmer_phone: user?.phone || '',
+        machine_id: assignedMachine || 'sim_001',
+        crop: selectedCrop.en,
+        acres: parseFloat(acres),
+        location,
+        status: 'pending (offline)',
+        created_at: new Date().toISOString(),
+        scheduled_date: scheduledDate,
+        scheduled_time: scheduledTime
+      }
+      
+      // Save to localStorage for later sync
+      const offlineBookings = JSON.parse(localStorage.getItem('offline_bookings') || '[]')
+      offlineBookings.push(offlineReceipt)
+      localStorage.setItem('offline_bookings', JSON.stringify(offlineBookings))
+      
+      setBookingReceipt(offlineReceipt)
+      await speak(t.success)
+      setStep('receipt')
     } finally {
       setLoading(false)
     }
   }
 
+  const getReceiptText = () => {
+    if (!bookingReceipt) return ''
+    return `🌾 AgriTrack Booking Receipt
+
+📋 Booking ID: ${bookingReceipt.id}
+👤 Name: ${bookingReceipt.farmer_name}
+📱 Phone: ${bookingReceipt.farmer_phone}
+🌱 Crop: ${bookingReceipt.crop}
+📐 Area: ${bookingReceipt.acres} acres
+📍 Location: ${bookingReceipt.location}
+🚜 Machine: ${bookingReceipt.machine_id}
+📅 Date: ${new Date(bookingReceipt.created_at).toLocaleDateString('en-IN')}
+✅ Status: ${bookingReceipt.status}
+
+This is your official booking receipt.
+यह आपकी आधिकारिक बुकिंग रसीद है।`
+  }
+
+  const handleShareWhatsApp = () => {
+    const text = encodeURIComponent(getReceiptText())
+    window.open(`https://wa.me/?text=${text}`, '_blank')
+  }
+
+  const handleShareSMS = () => {
+    const text = encodeURIComponent(getReceiptText())
+    window.open(`sms:?body=${text}`, '_blank')
+  }
+
+  const handleDownloadPDF = () => {
+    if (!bookingReceipt) return
+    
+    // Create a text file as PDF alternative (works on mobile)
+    const receiptText = `
+===========================================
+        AgriTrack - Digital Receipt
+        भारत सरकार | Government of India
+===========================================
+
+Booking ID: ${bookingReceipt.id}
+Status: ${bookingReceipt.status.toUpperCase()}
+
+----- Farmer Details -----
+Name: ${bookingReceipt.farmer_name}
+Phone: ${bookingReceipt.farmer_phone}
+Location: ${bookingReceipt.location}
+
+----- Booking Details -----
+Crop: ${bookingReceipt.crop}
+Land Area: ${bookingReceipt.acres} acres
+Machine ID: ${bookingReceipt.machine_id}
+Date: ${new Date(bookingReceipt.created_at).toLocaleString('en-IN')}
+
+===========================================
+This is a valid booking receipt.
+Show this to authorities if needed.
+यह एक वैध बुकिंग रसीद है।
+===========================================
+`
+    
+    const blob = new Blob([receiptText], { type: 'text/plain' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `AgriTrack_Receipt_${bookingReceipt.id}.txt`
+    a.click()
+    URL.revokeObjectURL(url)
+  }
+
+  const handleShare = async () => {
+    if (!bookingReceipt) return
+    try {
+      await navigator.share({
+        title: 'AgriTrack Booking Receipt',
+        text: getReceiptText(),
+      })
+    } catch (e) {
+      console.log('Share failed:', e)
+    }
+  }
+
+  const getCropName = (crop: Crop) => {
+    if (speechLang === 'hi-IN') return crop.hi
+    if (speechLang === 'bn-IN') return crop.bn
+    return crop.en
+  }
+  
+  const handleLanguageChange = (lang: SpeechLanguage) => {
+    setSpeechLang(lang)
+    // Also update app-wide language
+    if (lang === 'hi-IN') setAppLanguage('hi')
+    else if (lang === 'bn-IN') setAppLanguage('bn')
+    else setAppLanguage('en')
+  }
+
   return (
     <div className="book-page">
-      {/* Header */}
       <header className="book-header">
         <button className="back-btn" onClick={() => navigate(-1)}>
           <ArrowLeft size={24} />
         </button>
-        <h2>Book Machine</h2>
-        <div className="lang-selector">
-          <select value={voiceLanguage} onChange={(e) => setVoiceLanguage(e.target.value as any)}>
-            <option value="hi-IN">हिंदी</option>
-            <option value="en-IN">English</option>
-            <option value="bn-IN">বাংলা</option>
-          </select>
-        </div>
+        <h2>{t.booking}</h2>
+        <select 
+          className="lang-select"
+          value={speechLang} 
+          onChange={(e) => handleLanguageChange(e.target.value as SpeechLanguage)}
+        >
+          <option value="en-IN">EN</option>
+          <option value="hi-IN">हिंदी</option>
+          <option value="bn-IN">বাংলা</option>
+        </select>
       </header>
 
-      {/* Voice Input Section */}
-      <div className="voice-section">
-        <div className="voice-instructions">
-          <p className="voice-title">🎤 {voiceLanguage === 'hi-IN' ? 'आवाज से भरें:' : voiceLanguage === 'bn-IN' ? 'কণ্ঠে পূরণ করুন:' : 'Fill by Voice:'}</p>
-          <p className="example-text">
-            {voiceLanguage === 'hi-IN' 
-              ? '"मेरा नाम राम है, गेहूं, 5 एकड़, गांव रामपुर"'
-              : voiceLanguage === 'bn-IN'
-              ? '"আমার নাম রাম, ধান, ৫ বিঘা, গ্রাম রামপুর"'
-              : '"My name is Ram, Wheat, 5 acres, village Rampur"'}
-          </p>
-        </div>
-        
-        <button 
-          className={`voice-btn ${isListening ? 'listening' : ''} ${isSpeaking ? 'speaking' : ''}`}
-          onClick={toggleListening}
-          disabled={!voiceSupported}
-        >
-          {isListening ? (
-            <>
-              <div className="pulse-ring"></div>
-              <MicOff size={36} />
-            </>
-          ) : (
-            <Mic size={36} />
-          )}
-        </button>
-        
-        <p className="voice-status">
-          {!voiceSupported 
-            ? '❌ Voice not supported'
-            : isListening 
-            ? (voiceLanguage === 'hi-IN' ? '🔴 सुन रहा हूं... बोलें!' : '🔴 Listening... Speak now!')
-            : (voiceLanguage === 'hi-IN' ? 'माइक दबाएं और बोलें' : 'Tap mic and speak')}
-        </p>
-        
-        {voiceError && (
-          <div className="voice-error">
-            <AlertCircle size={16} />
-            <span>{voiceError}</span>
-          </div>
-        )}
-        
-        {transcript && (
-          <div className="transcript">
-            <Volume2 size={16} />
-            <span>"{transcript}"</span>
-          </div>
-        )}
+      <div className="progress-bar">
+        <div className="progress-fill" style={{ width: step === 'crop' ? '25%' : step === 'acres' ? '50%' : step === 'schedule' ? '75%' : '100%' }} />
       </div>
 
-      {/* Crop Selection */}
-      <div className="crop-section">
-        <button 
-          className="crop-toggle"
-          onClick={() => setShowCropGuide(!showCropGuide)}
-        >
-          <Leaf size={20} />
-          <span>{selectedCrop ? `${selectedCrop.icon} ${selectedCrop.names.en}` : 'Select Crop / फसल चुनें'}</span>
-          {showCropGuide ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
-        </button>
+      <div className="book-content">
+        {step === 'crop' && (
+          <div className="step-container">
+            <h3 className="step-title">{t.crop}</h3>
+            
+            <button 
+              className={'voice-btn-inline' + (isListening ? ' listening' : '') + (isSpeaking ? ' speaking' : '')}
+              onClick={handleCropVoice}
+              disabled={isListening || isSpeaking}
+            >
+              <Mic size={20} />
+              <span>{isSpeaking ? 'Speaking...' : isListening ? 'Listening...' : 'Voice'}</span>
+            </button>
 
-        {showCropGuide && (
-          <div className="crop-guide">
-            <div className="crop-search">
-              <Search size={16} />
-              <input
-                type="text"
-                placeholder="Search crops..."
-                value={cropSearchTerm}
-                onChange={(e) => setCropSearchTerm(e.target.value)}
-              />
-            </div>
-            <div className="crop-list">
-              {filteredCrops.map((crop: CropData) => (
+            {transcript && (
+              <div className="transcript">
+                <Check size={16} />
+                <span>{transcript}</span>
+              </div>
+            )}
+
+            <div className="crop-grid">
+              {CROPS.map(crop => (
                 <button
                   key={crop.id}
-                  className={`crop-item ${selectedCrop?.id === crop.id ? 'selected' : ''}`}
-                  onClick={() => {
-                    setCropType(crop.id)
-                    setSelectedCrop(crop)
-                    autoSelectMachineForCrop(crop)
-                    setShowCropGuide(false)
-                  }}
+                  className={'crop-card' + (selectedCrop?.id === crop.id ? ' selected' : '')}
+                  onClick={() => selectCropAndNext(crop)}
                 >
                   <span className="crop-icon">{crop.icon}</span>
-                  <div className="crop-info">
-                    <span className="crop-name">{crop.names.en}</span>
-                    <span className="crop-hindi">{crop.names.hi}</span>
-                  </div>
+                  <span className="crop-name">{getCropName(crop)}</span>
                 </button>
               ))}
             </div>
+
+            {selectedCrop && (
+              <div className="next-section">
+                <div className="selected-info">
+                  ✓ {getCropName(selectedCrop)} selected
+                </div>
+                <button className="next-btn" onClick={goToAcres}>
+                  {t.next} →
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+
+        {step === 'acres' && (
+          <div className="step-container">
+            <h3 className="step-title">{t.area}</h3>
+            
+            <div className="selected-chip">
+              {selectedCrop?.icon} {selectedCrop && getCropName(selectedCrop)}
+            </div>
+
+            <button 
+              className={'voice-btn-inline' + (isListening ? ' listening' : '') + (isSpeaking ? ' speaking' : '')}
+              onClick={handleAcresVoice}
+              disabled={isListening || isSpeaking}
+            >
+              <Mic size={20} />
+              <span>{isSpeaking ? 'Speaking...' : isListening ? 'Listening...' : 'Voice'}</span>
+            </button>
+
+            {transcript && (
+              <div className="transcript">
+                <Check size={16} />
+                <span>{transcript}</span>
+              </div>
+            )}
+
+            <div className="manual-input">
+              <input
+                type="number"
+                placeholder={t.area}
+                value={acres}
+                onChange={(e) => setAcres(e.target.value)}
+              />
+              <button 
+                className="next-btn"
+                disabled={!acres}
+                onClick={() => setStep('schedule')}
+              >
+                {t.next}
+              </button>
+            </div>
+          </div>
+        )}
+
+        {step === 'schedule' && (
+          <div className="step-container">
+            <h3 className="step-title">📅 {t.schedule}</h3>
+            
+            <div className="selected-chip">
+              {selectedCrop?.icon} {selectedCrop && getCropName(selectedCrop)} • {acres} {t.acres}
+            </div>
+
+            <div className="schedule-form">
+              <div className="schedule-field">
+                <label>{t.selectDate}</label>
+                <input
+                  type="date"
+                  value={scheduledDate}
+                  onChange={(e) => setScheduledDate(e.target.value)}
+                  min={new Date().toISOString().split('T')[0]}
+                />
+              </div>
+              
+              <div className="schedule-field">
+                <label>{t.selectTime}</label>
+                <input
+                  type="time"
+                  value={scheduledTime}
+                  onChange={(e) => setScheduledTime(e.target.value)}
+                />
+              </div>
+            </div>
+
+            <button 
+              className="next-btn"
+              disabled={!scheduledDate || !scheduledTime}
+              onClick={() => setStep('confirm')}
+            >
+              {t.next}
+            </button>
+          </div>
+        )}
+
+        {step === 'confirm' && (
+          <div className="step-container">
+            <h3 className="step-title">{t.confirmBooking}</h3>
+            
+            <div className="confirm-card">
+              <div className="confirm-row">
+                <span className="confirm-label">{t.name}</span>
+                <span className="confirm-value">{user?.name || 'Farmer'}</span>
+              </div>
+              <div className="confirm-row">
+                <span className="confirm-label">{t.phone}</span>
+                <span className="confirm-value">{user?.phone || '-'}</span>
+              </div>
+              <div className="confirm-row">
+                <span className="confirm-label">{t.crop}</span>
+                <span className="confirm-value">
+                  {selectedCrop?.icon} {selectedCrop && getCropName(selectedCrop)}
+                </span>
+              </div>
+              <div className="confirm-row">
+                <span className="confirm-label">{t.area}</span>
+                <span className="confirm-value">{acres} {t.acres}</span>
+              </div>
+              <div className="confirm-row clickable" onClick={handleLocationVoice}>
+                <span className="confirm-label">
+                  <MapPin size={14} /> {t.location}
+                </span>
+                <span className="confirm-value">
+                  {location} <Edit2 size={14} />
+                </span>
+              </div>
+              <div className="confirm-row">
+                <span className="confirm-label">{t.machine}</span>
+                <span className="confirm-value">{assignedMachine}</span>
+              </div>
+              <div className="confirm-row highlight">
+                <span className="confirm-label">📅 {t.arrivalDate}</span>
+                <span className="confirm-value">{scheduledDate ? new Date(scheduledDate).toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' }) : '-'}</span>
+              </div>
+              <div className="confirm-row highlight">
+                <span className="confirm-label">⏰ {t.arrivalTime}</span>
+                <span className="confirm-value">{scheduledTime || '-'}</span>
+              </div>
+            </div>
+
+            <button 
+              className="submit-btn"
+              onClick={handleConfirm}
+              disabled={loading}
+            >
+              {loading ? '...' : t.confirm}
+            </button>
+          </div>
+        )}
+
+        {step === 'receipt' && bookingReceipt && (
+          <div className="receipt-container">
+            <div className="receipt-success">
+              <CheckCircle size={48} />
+              <h2>{speechLang === 'hi-IN' ? 'बुकिंग सफल!' : speechLang === 'bn-IN' ? 'বুকিং সফল!' : 'Booking Confirmed!'}</h2>
+              <p>{speechLang === 'hi-IN' ? 'रसीद जनरेट हो गई' : speechLang === 'bn-IN' ? 'রসিদ তৈরি হয়েছে' : 'Receipt Generated'}</p>
+            </div>
+
+            <div className="receipt-card">
+              <div className="receipt-header">
+                <span>🇮🇳</span>
+                <div>
+                  <strong>AgriTrack</strong>
+                  <small>{speechLang === 'hi-IN' ? 'भारत सरकार' : speechLang === 'bn-IN' ? 'ভারত সরকার' : 'Government of India'}</small>
+                </div>
+              </div>
+
+              <div className="receipt-id">
+                <span>{speechLang === 'hi-IN' ? 'बुकिंग आईडी' : speechLang === 'bn-IN' ? 'বুকিং আইডি' : 'Booking ID'}</span>
+                <strong>{bookingReceipt.id}</strong>
+              </div>
+
+              <div className="receipt-details">
+                <div className="receipt-row">
+                  <span>{t.name}</span>
+                  <strong>{bookingReceipt.farmer_name}</strong>
+                </div>
+                <div className="receipt-row">
+                  <span>{t.phone}</span>
+                  <strong>{bookingReceipt.farmer_phone}</strong>
+                </div>
+                <div className="receipt-row">
+                  <span>{t.crop}</span>
+                  <strong>{selectedCrop?.icon} {bookingReceipt.crop}</strong>
+                </div>
+                <div className="receipt-row">
+                  <span>{t.area}</span>
+                  <strong>{bookingReceipt.acres} {t.acres}</strong>
+                </div>
+                <div className="receipt-row">
+                  <span>{t.location}</span>
+                  <strong>{bookingReceipt.location}</strong>
+                </div>
+                <div className="receipt-row">
+                  <span>{t.machine}</span>
+                  <strong>{bookingReceipt.machine_id}</strong>
+                </div>
+                <div className="receipt-row">
+                  <span>Status</span>
+                  <strong className="status-badge">{bookingReceipt.status}</strong>
+                </div>
+                <div className="receipt-row highlight-row">
+                  <span>📅 {t.arrivalDate}</span>
+                  <strong>{bookingReceipt.scheduled_date ? new Date(bookingReceipt.scheduled_date).toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' }) : '-'}</strong>
+                </div>
+                <div className="receipt-row highlight-row">
+                  <span>⏰ {t.arrivalTime}</span>
+                  <strong>{bookingReceipt.scheduled_time || '-'}</strong>
+                </div>
+                <div className="receipt-row">
+                  <span>{speechLang === 'hi-IN' ? 'बुकिंग तारीख' : 'Booking Date'}</span>
+                  <strong>{new Date(bookingReceipt.created_at).toLocaleDateString('en-IN')}</strong>
+                </div>
+              </div>
+
+              {bookingReceipt.id.startsWith('offline_') && (
+                <div className="offline-notice">
+                  📵 {speechLang === 'hi-IN' ? 'ऑफलाइन मोड - ऑनलाइन होने पर सिंक होगा' : 'Offline Mode - Will sync when online'}
+                </div>
+              )}
+
+              <div className="receipt-note">
+                <strong>⚠️ {speechLang === 'hi-IN' ? 'महत्वपूर्ण' : speechLang === 'bn-IN' ? 'গুরুত্বপূর্ণ' : 'Important'}</strong>
+                <p>{speechLang === 'hi-IN' ? 'यह आपकी आधिकारिक बुकिंग रसीद है। इसे सुरक्षित रखें।' : speechLang === 'bn-IN' ? 'এটি আপনার অফিসিয়াল বুকিং রসিদ। এটি নিরাপদ রাখুন।' : 'This is your official booking receipt. Keep it safe.'}</p>
+              </div>
+            </div>
+
+            {/* Share Options */}
+            <div className="share-section">
+              <h4>{speechLang === 'hi-IN' ? 'रसीद शेयर करें' : speechLang === 'bn-IN' ? 'রসিদ শেয়ার করুন' : 'Share Receipt'}</h4>
+              <div className="share-buttons">
+                <button className="share-btn whatsapp" onClick={handleShareWhatsApp}>
+                  <MessageCircle size={20} />
+                  <span>WhatsApp</span>
+                </button>
+                <button className="share-btn sms" onClick={handleShareSMS}>
+                  <MessageCircle size={20} />
+                  <span>SMS</span>
+                </button>
+                <button className="share-btn download" onClick={handleDownloadPDF}>
+                  <Download size={20} />
+                  <span>{speechLang === 'hi-IN' ? 'डाउनलोड' : 'Download'}</span>
+                </button>
+                <button className="share-btn other" onClick={handleShare}>
+                  <Share2 size={20} />
+                  <span>{speechLang === 'hi-IN' ? 'अन्य' : 'Other'}</span>
+                </button>
+              </div>
+            </div>
+
+            <button className="feedback-btn" onClick={() => setStep('feedback')}>
+              <FileText size={20} />
+              <span>{speechLang === 'hi-IN' ? 'फीडबैक दें' : speechLang === 'bn-IN' ? 'ফিডব্যাক দিন' : 'Give Feedback'}</span>
+            </button>
+
+            <button className="home-btn" onClick={() => navigate('/')}>
+              <Home size={20} />
+              <span>{speechLang === 'hi-IN' ? 'होम पर जाएं' : speechLang === 'bn-IN' ? 'হোমে যান' : 'Go to Home'}</span>
+            </button>
+
+            <button className="bookings-btn" onClick={() => navigate('/bookings')}>
+              {speechLang === 'hi-IN' ? 'सभी बुकिंग देखें' : speechLang === 'bn-IN' ? 'সব বুকিং দেখুন' : 'View All Bookings'}
+            </button>
+          </div>
+        )}
+
+        {step === 'feedback' && (
+          <div className="feedback-container">
+            <h3 className="feedback-title">
+              {speechLang === 'hi-IN' ? 'अपना अनुभव साझा करें' : speechLang === 'bn-IN' ? 'আপনার অভিজ্ঞতা শেয়ার করুন' : 'Rate Your Experience'}
+            </h3>
+            <p className="feedback-subtitle">
+              {speechLang === 'hi-IN' ? 'आपका अनुभव साझा करें' : 'Share your experience'}
+            </p>
+
+            <div className="feedback-card">
+              <h4>{speechLang === 'hi-IN' ? 'कार्य पूर्णता फीडबैक' : 'Work Completion Feedback'}</h4>
+              <p>{speechLang === 'hi-IN' ? 'क्या काम आपकी संतुष्टि के अनुसार पूरा हुआ?' : 'Is the work completed to your satisfaction?'}</p>
+              
+              <div className="feedback-options">
+                <button className="feedback-option yes" onClick={() => {
+                  alert(speechLang === 'hi-IN' ? 'धन्यवाद! आपका फीडबैक दर्ज हो गया।' : 'Thank you! Your feedback has been recorded.')
+                  navigate('/')
+                }}>
+                  <ThumbsUp size={24} />
+                  <span>{speechLang === 'hi-IN' ? 'हाँ, काम ठीक है' : 'Yes, Work is OK'}</span>
+                </button>
+                <button className="feedback-option no" onClick={() => {
+                  alert(speechLang === 'hi-IN' ? 'हम जल्द ही आपसे संपर्क करेंगे।' : 'We will contact you soon.')
+                  navigate('/')
+                }}>
+                  <ThumbsDown size={24} />
+                  <span>{speechLang === 'hi-IN' ? 'नहीं, फिर से करें' : 'No, Needs Redo'}</span>
+                </button>
+              </div>
+
+              <button className="cancel-feedback" onClick={() => setStep('receipt')}>
+                {speechLang === 'hi-IN' ? 'रद्द करें' : 'Cancel'}
+              </button>
+            </div>
+
+            <button className="view-receipt-btn" onClick={() => setStep('receipt')}>
+              <FileText size={20} />
+              <span>{speechLang === 'hi-IN' ? 'डिजिटल रसीद देखें' : 'View Digital Receipt'}</span>
+            </button>
           </div>
         )}
       </div>
-
-      {/* Booking Form */}
-      <form className="book-form" onSubmit={handleSubmit}>
-        <div className="form-group">
-          <label>Machine / मशीन</label>
-          <select 
-            value={selectedMachine} 
-            onChange={(e) => setSelectedMachine(e.target.value)}
-            required
-          >
-            <option value="">Select Machine</option>
-            {availableMachines.map(m => (
-              <option key={m.id} value={m.id}>
-                {m.id} - {m.state === 'idle' ? '✓ Available' : '⚡ Working'}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        <div className="form-group">
-          <label>Your Name / आपका नाम</label>
-          <input
-            type="text"
-            value={farmerName}
-            onChange={(e) => setFarmerName(e.target.value)}
-            placeholder="Enter your name"
-            required
-          />
-        </div>
-
-        <div className="form-group">
-          <label>Phone Number / फोन नंबर</label>
-          <input
-            type="tel"
-            value={farmerPhone}
-            onChange={(e) => setFarmerPhone(e.target.value)}
-            placeholder="Enter phone number"
-          />
-        </div>
-
-        <div className="form-group">
-          <label>Land Area (Acres) / जमीन (एकड़)</label>
-          <input
-            type="number"
-            value={acres}
-            onChange={(e) => setAcres(e.target.value)}
-            placeholder="Enter acres"
-            step="0.5"
-            min="0.5"
-            required
-          />
-        </div>
-
-        <div className="form-group">
-          <label>Village/Location / गांव</label>
-          <input
-            type="text"
-            value={location}
-            onChange={(e) => setLocation(e.target.value)}
-            placeholder="Enter village name"
-            required
-          />
-        </div>
-
-        <button type="submit" className="submit-btn" disabled={loading}>
-          {loading ? 'Booking...' : 'Confirm Booking / बुकिंग करें'}
-        </button>
-      </form>
     </div>
   )
 }

@@ -10,8 +10,10 @@ import ProfilePage from './pages/ProfilePage'
 import LoginPage from './pages/LoginPage'
 import MarketplacePage from './pages/MarketplacePage'
 import GreenCertificatePage from './pages/GreenCertificatePage'
+import SplashScreen from './pages/SplashScreen'
 import { SocketProvider } from './context/SocketContext'
 import { AuthProvider, useAuth } from './context/AuthContext'
+import { LanguageProvider } from './context/LanguageContext'
 import './App.css'
 
 // Protected route wrapper
@@ -85,12 +87,20 @@ function AppRoutes() {
 }
 
 function App() {
+  const [showSplash, setShowSplash] = useState(true)
+
+  if (showSplash) {
+    return <SplashScreen onComplete={() => setShowSplash(false)} />
+  }
+
   return (
-    <AuthProvider>
-      <SocketProvider>
-        <AppRoutes />
-      </SocketProvider>
-    </AuthProvider>
+    <LanguageProvider>
+      <AuthProvider>
+        <SocketProvider>
+          <AppRoutes />
+        </SocketProvider>
+      </AuthProvider>
+    </LanguageProvider>
   )
 }
 

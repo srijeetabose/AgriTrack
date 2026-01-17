@@ -3,7 +3,6 @@
 import { useEffect, useState, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { ArrowLeft, Download, Share2, CheckCircle } from 'lucide-react';
-import QRCode from 'qrcode';
 
 interface Booking {
   id: string;
@@ -14,7 +13,6 @@ interface Booking {
   acres: number;
   status: string;
   created_at: string;
-  qr_data: string;
   offline?: boolean;
 }
 
@@ -22,7 +20,6 @@ export default function BookingReceipt() {
   const params = useParams();
   const router = useRouter();
   const [booking, setBooking] = useState<Booking | null>(null);
-  const [qrCode, setQrCode] = useState('');
   const receiptRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -39,7 +36,6 @@ export default function BookingReceipt() {
       
       if (offlineBooking) {
         setBooking(offlineBooking);
-        generateQRCode(offlineBooking);
         return;
       }
     }
@@ -49,38 +45,8 @@ export default function BookingReceipt() {
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/api/v1/bookings/${bookingId}`);
       const data = await response.json();
       setBooking(data);
-      generateQRCode(data);
     } catch (error) {
       console.error('Failed to load booking:', error);
-    }
-  };
-
-  const generateQRCode = async (bookingData: Booking) => {
-    // Generate compact receipt text for QR scanning
-    const receiptText = `AgriTrack Receipt
-Booking: ${bookingData.id}
-Status: ${bookingData.status?.toUpperCase() || 'PENDING'}
-Name: ${bookingData.farmer_name}
-Phone: ${bookingData.farmer_phone}
-Location: ${bookingData.location}
-Machine: ${bookingData.machine_id}
-Area: ${bookingData.acres} acres
-Date: ${new Date(bookingData.created_at).toLocaleDateString('en-IN')}
-Valid booking receipt.`;
-
-    try {
-      const qrDataUrl = await QRCode.toDataURL(receiptText, {
-        width: 300,
-        margin: 2,
-        color: {
-          dark: '#000000',
-          light: '#ffffff'
-        },
-        errorCorrectionLevel: 'L'
-      });
-      setQrCode(qrDataUrl);
-    } catch (error) {
-      console.error('Failed to generate QR code:', error);
     }
   };
 
@@ -224,22 +190,6 @@ Show this to authorities if needed.
                   {new Date(booking.created_at).toLocaleDateString()}
                 </p>
               </div>
-            </div>
-
-            {/* QR Code */}
-            <div className="pt-4 border-t">
-              <p className="text-center text-sm font-semibold text-gray-700 mb-3">
-                Show this QR Code to Police/Patwari
-                <br />
-                <span className="text-xs text-gray-500">इस क्यूआर कोड को दिखाएं</span>
-              </p>
-              {qrCode ? (
-                <div className="bg-white p-4 rounded-lg border-2 border-gray-300 inline-block mx-auto w-full text-center">
-                  <img src={qrCode} alt="QR Code" className="mx-auto" style={{ maxWidth: '250px' }} />
-                </div>
-              ) : (
-                <div className="text-center py-4 text-gray-500">Generating QR Code...</div>
-              )}
             </div>
 
             {/* Important Note */}

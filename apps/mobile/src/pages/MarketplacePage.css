@@ -1,6 +1,8 @@
 .marketplace-page {
   padding: 16px;
-  padding-bottom: 80px;
+  padding-bottom: 100px;
+  background: #f8fafc;
+  min-height: 100vh;
 }
 
 .loading-container {
@@ -13,7 +15,7 @@
   color: #6b7280;
 }
 
-.spinner {
+.spinner, .spinning {
   animation: spin 1s linear infinite;
 }
 
@@ -21,68 +23,87 @@
   to { transform: rotate(360deg); }
 }
 
+/* Header */
 .marketplace-header {
-  margin-bottom: 20px;
+  margin-bottom: 16px;
+}
+
+.header-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 
 .marketplace-header h1 {
   font-size: 24px;
-  margin: 0 0 4px 0;
+  margin: 0;
 }
 
 .marketplace-header p {
   color: #6b7280;
   font-size: 14px;
-  margin: 0;
+  margin: 4px 0 8px 0;
 }
 
-.green-banner {
-  background: linear-gradient(135deg, #16a34a 0%, #15803d 100%);
-  border-radius: 16px;
-  padding: 16px;
-  color: white;
-  margin-bottom: 16px;
+.refresh-btn {
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 8px;
+  cursor: pointer;
 }
 
-.green-banner-content {
+.live-indicator {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 6px;
+  font-size: 12px;
+  color: #16a34a;
 }
 
-.green-banner h3 {
-  margin: 0 0 4px 0;
-  font-size: 16px;
+.live-dot {
+  width: 8px;
+  height: 8px;
+  background: #16a34a;
+  border-radius: 50%;
+  animation: pulse 2s infinite;
 }
 
-.green-banner p {
-  margin: 0;
-  font-size: 14px;
-  opacity: 0.9;
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
 }
 
-.upgrade-banner {
+.error-banner {
   display: flex;
   align-items: center;
   gap: 8px;
-  background: #fef3c7;
-  border: 1px solid #fcd34d;
+  background: #fee2e2;
+  border: 1px solid #fca5a5;
   border-radius: 12px;
   padding: 12px 16px;
-  color: #92400e;
-  font-size: 14px;
   margin-bottom: 16px;
+  color: #991b1b;
+  font-size: 14px;
 }
 
-.upgrade-banner svg:last-child {
+.error-banner button {
   margin-left: auto;
+  background: #dc2626;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 6px 12px;
+  font-size: 12px;
+  cursor: pointer;
 }
 
+/* Market Summary */
 .market-summary {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 8px;
-  margin-bottom: 20px;
+  margin-bottom: 16px;
 }
 
 .summary-item {
@@ -90,7 +111,7 @@
   border-radius: 12px;
   padding: 12px 8px;
   text-align: center;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
 }
 
 .summary-value {
@@ -100,21 +121,327 @@
   color: #1f2937;
 }
 
-.summary-item.rising .summary-value {
-  color: #16a34a;
+.summary-item.rising .summary-value { color: #16a34a; }
+.summary-item.falling .summary-value { color: #dc2626; }
+.summary-label { font-size: 11px; color: #6b7280; }
+
+/* Soil Wealth Section - The Psychological Pivot */
+.soil-wealth-section {
+  background: linear-gradient(135deg, #fef2f2 0%, #fff7ed 100%);
+  border: 2px solid #fca5a5;
+  border-radius: 20px;
+  margin-bottom: 20px;
+  overflow: hidden;
 }
 
-.summary-item.falling .summary-value {
+.soil-wealth-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px;
+  cursor: pointer;
+}
+
+.soil-wealth-title {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.fire-icon {
+  color: #dc2626;
+  animation: flicker 1.5s infinite;
+}
+
+@keyframes flicker {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
+.soil-wealth-title h2 {
+  margin: 0;
+  font-size: 16px;
+  color: #991b1b;
+}
+
+.warning-text {
+  margin: 0;
+  font-size: 12px;
+  color: #dc2626;
+  font-weight: 600;
+}
+
+.rotated {
+  transform: rotate(180deg);
+  transition: transform 0.3s;
+}
+
+/* Fertilizer Calculator */
+.fertilizer-calculator {
+  padding: 0 16px 16px;
+}
+
+.acres-input {
+  margin-bottom: 16px;
+}
+
+.acres-input label {
+  display: block;
+  font-size: 14px;
+  color: #374151;
+  margin-bottom: 8px;
+}
+
+.acres-slider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.acres-slider button {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border: 2px solid #16a34a;
+  background: white;
+  color: #16a34a;
+  font-size: 24px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  padding: 0;
+  flex-shrink: 0;
+}
+
+.acres-slider button:active {
+  background: #dcfce7;
+}
+
+.acres-slider input {
+  flex: 1;
+  text-align: center;
+  font-size: 28px;
+  font-weight: 700;
+  border: 2px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 12px 8px;
+  min-width: 0;
+}
+
+/* Loss Breakdown */
+.loss-breakdown {
+  background: white;
+  border-radius: 16px;
+  padding: 16px;
+  margin-bottom: 16px;
+}
+
+.loss-breakdown h4 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 12px 0;
+  color: #dc2626;
+  font-size: 14px;
+}
+
+.loss-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 0;
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.loss-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.loss-icon {
+  font-size: 18px;
+}
+
+.loss-cost {
+  font-weight: 600;
   color: #dc2626;
 }
 
-.summary-label {
-  font-size: 11px;
-  color: #6b7280;
+.total-loss {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 2px dashed #fca5a5;
 }
 
+.total-loss-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+  color: #991b1b;
+}
+
+.total-loss-value {
+  font-size: 24px;
+  font-weight: 700;
+  color: #dc2626;
+}
+
+/* Savings Section */
+.savings-section {
+  margin-bottom: 16px;
+}
+
+.savings-section h4 {
+  margin: 0 0 12px 0;
+  color: #16a34a;
+}
+
+.savings-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.saving-card {
+  background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%);
+  border-radius: 16px;
+  padding: 16px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.saving-icon {
+  font-size: 28px;
+}
+
+.water-icon {
+  color: #0ea5e9;
+}
+
+.saving-value {
+  font-size: 22px;
+  font-weight: 700;
+  color: #166534;
+}
+
+.saving-label {
+  font-size: 11px;
+  color: #166534;
+}
+
+/* Yield Prediction */
+.yield-prediction {
+  background: white;
+  border-radius: 16px;
+  padding: 16px;
+  margin-bottom: 16px;
+}
+
+.yield-prediction h4 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 16px 0;
+  color: #374151;
+}
+
+.yield-comparison {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.yield-bar {
+  position: relative;
+  height: 40px;
+  background: #f3f4f6;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.yield-bar .yield-fill {
+  height: 100%;
+  border-radius: 8px;
+  transition: width 0.5s ease;
+}
+
+.yield-bar.burnt .yield-fill {
+  background: linear-gradient(90deg, #fca5a5 0%, #f87171 100%);
+}
+
+.yield-bar.mulched .yield-fill {
+  background: linear-gradient(90deg, #86efac 0%, #22c55e 100%);
+}
+
+.yield-label {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 12px;
+  color: #374151;
+  font-weight: 500;
+}
+
+.yield-value {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 14px;
+  font-weight: 700;
+  color: #1f2937;
+}
+
+.extra-income {
+  margin-top: 16px;
+  padding: 12px;
+  background: #fef3c7;
+  border-radius: 12px;
+  text-align: center;
+  font-size: 14px;
+}
+
+.extra-income strong {
+  color: #16a34a;
+  font-size: 18px;
+}
+
+.income-note {
+  color: #92400e;
+  font-size: 12px;
+}
+
+/* CRM Message */
+.crm-message {
+  background: linear-gradient(135deg, #16a34a 0%, #15803d 100%);
+  border-radius: 12px;
+  padding: 16px;
+  text-align: center;
+}
+
+.crm-message p {
+  margin: 0;
+  color: white;
+  font-size: 14px;
+  font-weight: 500;
+  font-style: italic;
+}
+
+/* Prices Section */
 .prices-section {
-  margin-bottom: 24px;
+  margin-bottom: 20px;
 }
 
 .prices-section h2 {
@@ -135,14 +462,14 @@
   background: white;
   border-radius: 16px;
   padding: 16px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
   border: 2px solid transparent;
   cursor: pointer;
   transition: all 0.2s ease;
 }
 
 .crop-card:hover {
-  box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
 }
 
 .crop-card.selected {
@@ -162,7 +489,7 @@
   font-size: 16px;
 }
 
-.crop-hindi {
+.crop-english {
   font-size: 12px;
   color: #6b7280;
 }
@@ -177,20 +504,9 @@
   font-weight: 600;
 }
 
-.trend-badge.up {
-  background: #dcfce7;
-  color: #16a34a;
-}
-
-.trend-badge.down {
-  background: #fee2e2;
-  color: #dc2626;
-}
-
-.trend-badge.stable {
-  background: #f3f4f6;
-  color: #6b7280;
-}
+.trend-badge.up { background: #dcfce7; color: #16a34a; }
+.trend-badge.down { background: #fee2e2; color: #dc2626; }
+.trend-badge.stable { background: #f3f4f6; color: #6b7280; }
 
 .trend-up { color: #16a34a; }
 .trend-down { color: #dc2626; }
@@ -217,20 +533,138 @@
   font-size: 12px;
 }
 
-.msp {
+.msp { color: #6b7280; }
+.above-msp { color: #16a34a; font-weight: 600; }
+
+/* Expanded Crop View */
+.crop-expanded {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid #e5e7eb;
+}
+
+.chart-section h4 {
+  margin: 0 0 12px 0;
+  font-size: 14px;
+  color: #374151;
+}
+
+/* Price Chart */
+.price-chart {
+  background: #f9fafb;
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 12px;
+}
+
+.chart-bars {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  height: 80px;
+  gap: 8px;
+}
+
+.chart-bar-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  height: 100%;
+}
+
+.chart-bar {
+  width: 100%;
+  background: linear-gradient(180deg, #86efac 0%, #22c55e 100%);
+  border-radius: 4px 4px 0 0;
+  transition: height 0.3s ease;
+}
+
+.chart-bar.current {
+  background: linear-gradient(180deg, #fbbf24 0%, #f59e0b 100%);
+}
+
+.chart-day {
+  font-size: 10px;
+  color: #9ca3af;
+  margin-top: 4px;
+}
+
+.chart-labels {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 8px;
+  font-size: 11px;
   color: #6b7280;
 }
 
-.green-bonus {
-  color: #16a34a;
+.compare-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px;
+  background: #f3f4f6;
+  border: none;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  margin-bottom: 12px;
+}
+
+/* Mandi Comparison */
+.mandi-comparison {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.mandi-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px;
+  background: #f9fafb;
+  border-radius: 10px;
+}
+
+.mandi-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.mandi-name {
   font-weight: 600;
+  font-size: 14px;
 }
 
-.calculator-section {
-  margin-bottom: 24px;
+.mandi-state {
+  font-size: 12px;
+  color: #6b7280;
 }
 
-.calculator-section h2 {
+.mandi-prices {
+  text-align: right;
+}
+
+.price-range {
+  display: block;
+  font-size: 12px;
+  color: #6b7280;
+}
+
+.modal-price {
+  font-weight: 600;
+  color: #16a34a;
+}
+
+/* Quick Calculator */
+.quick-calc-section {
+  margin-bottom: 20px;
+}
+
+.quick-calc-section h2 {
   font-size: 18px;
   margin: 0 0 12px 0;
   display: flex;
@@ -238,252 +672,29 @@
   gap: 8px;
 }
 
-.calculator-card {
+.quick-calc-card {
   background: white;
   border-radius: 16px;
-  padding: 20px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-}
-
-.calc-crop {
-  display: flex;
-  gap: 8px;
-  font-size: 14px;
-  margin-bottom: 16px;
-  padding-bottom: 12px;
-  border-bottom: 1px solid #e5e7eb;
-}
-
-.calc-crop span {
-  color: #6b7280;
-}
-
-.calc-input {
-  margin-bottom: 16px;
-}
-
-.calc-input label {
-  display: block;
-  font-size: 14px;
-  color: #374151;
-  margin-bottom: 6px;
-}
-
-.calc-input input {
-  width: 100%;
-  padding: 12px 16px;
-  border: 2px solid #e5e7eb;
-  border-radius: 12px;
-  font-size: 18px;
-  font-weight: 600;
-  text-align: center;
-  box-sizing: border-box;
-}
-
-.calc-input input:focus {
-  outline: none;
-  border-color: #16a34a;
-}
-
-.earnings-result {
-  background: #f9fafb;
-  border-radius: 12px;
   padding: 16px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
 }
 
-.earnings-row {
+.calc-row {
   display: flex;
   justify-content: space-between;
+  padding: 8px 0;
   font-size: 14px;
-  margin-bottom: 8px;
   color: #374151;
 }
 
-.earnings-row.bonus {
-  color: #16a34a;
-  font-weight: 500;
-}
-
-.bonus-amount {
-  font-weight: 600;
-}
-
-.earnings-total {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-top: 12px;
+.calc-row.total {
+  border-top: 2px dashed #e5e7eb;
+  margin-top: 8px;
   padding-top: 12px;
-  border-top: 2px dashed #d1d5db;
   font-weight: 600;
 }
 
-.total-value {
-  font-size: 24px;
+.calc-total {
+  font-size: 20px;
   color: #16a34a;
-}
-
-.msp-comparison {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  margin-top: 12px;
-  padding: 8px 12px;
-  background: #fef3c7;
-  border-radius: 8px;
-  color: #92400e;
-  font-size: 13px;
-  font-weight: 500;
-}
-
-.buyers-section {
-  margin-bottom: 24px;
-}
-
-.buyers-section h2 {
-  font-size: 18px;
-  margin: 0 0 4px 0;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.buyers-subtitle {
-  color: #6b7280;
-  font-size: 13px;
-  margin: 0 0 16px 0;
-}
-
-.buyers-list {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.buyer-card {
-  background: white;
-  border-radius: 16px;
-  padding: 16px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-}
-
-.buyer-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 8px;
-}
-
-.buyer-header h3 {
-  margin: 0;
-  font-size: 15px;
-}
-
-.verified-badge {
-  background: #dcfce7;
-  color: #16a34a;
-  font-size: 11px;
-  padding: 2px 8px;
-  border-radius: 12px;
-  font-weight: 600;
-}
-
-.buyer-meta {
-  display: flex;
-  gap: 12px;
-  margin-bottom: 10px;
-  font-size: 13px;
-}
-
-.buyer-type {
-  color: #6b7280;
-}
-
-.buyer-premium {
-  color: #16a34a;
-  font-weight: 600;
-}
-
-.buyer-crops {
-  display: flex;
-  gap: 6px;
-  flex-wrap: wrap;
-  margin-bottom: 8px;
-}
-
-.crop-tag {
-  background: #f3f4f6;
-  padding: 4px 10px;
-  border-radius: 16px;
-  font-size: 12px;
-  color: #374151;
-}
-
-.buyer-min {
-  font-size: 12px;
-  color: #9ca3af;
-  margin-bottom: 12px;
-}
-
-.contact-btn {
-  width: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  padding: 12px;
-  background: linear-gradient(135deg, #16a34a 0%, #15803d 100%);
-  color: white;
-  border: none;
-  border-radius: 12px;
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.benefits-section {
-  background: #f0fdf4;
-  border-radius: 20px;
-  padding: 20px;
-  margin-top: 20px;
-}
-
-.benefits-section h2 {
-  font-size: 18px;
-  margin: 0 0 16px 0;
-}
-
-.benefits-list {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-.benefit-item {
-  display: flex;
-  gap: 12px;
-  align-items: flex-start;
-}
-
-.benefit-icon {
-  font-size: 24px;
-  width: 40px;
-  height: 40px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: white;
-  border-radius: 12px;
-  flex-shrink: 0;
-}
-
-.benefit-item h4 {
-  margin: 0 0 2px 0;
-  font-size: 14px;
-}
-
-.benefit-item p {
-  margin: 0;
-  font-size: 12px;
-  color: #6b7280;
 }
