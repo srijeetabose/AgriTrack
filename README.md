@@ -1,7 +1,5 @@
 # AgriTrack - Smart CRM Machinery Monitoring
 
-🚜 **Smart India Hackathon 2025** | Problem ID: SIH25261
-
 ## Quick Start
 
 ### Prerequisites
